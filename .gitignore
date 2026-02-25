@@ -1,0 +1,29 @@
+# Build artifacts
+**/target/
+**/node_modules/
+**/dist/
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+
+# OS / logs
+.DS_Store
+Thumbs.db
+*.log
+
+# Local env/secrets
+.env
+.env.*
+
+# Temporary setup files
+admin_setup.sql
+
+# Ignore diagrams and planning docs
+DIAGRAM_*.md
+DIAGRAMS_MASTER_CHECKLIST.md
+YOUR_8_WEEK_PLAN.md
+PROJECT_CONTEXT_MASTER.md
+PROJECT_PROGRESS_TRACKER.md
+SESSION_START_PROMPT.md
