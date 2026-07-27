@@ -12,16 +12,16 @@ import org.springframework.data.jpa.repository.Query;
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Override
-    @EntityGraph(attributePaths = {"pickupArea", "dropoffArea", "customer"})
+    @EntityGraph(attributePaths = {"customer"})
     List<Order> findAll();
 
-    @EntityGraph(attributePaths = {"pickupArea", "dropoffArea", "customer"})
+    @EntityGraph(attributePaths = {"customer"})
     List<Order> findByCustomerIdOrderByCreatedAtDesc(Long customerId);
 
-    @EntityGraph(attributePaths = {"pickupArea", "dropoffArea", "customer"})
+    @EntityGraph(attributePaths = {"customer"})
     Optional<Order> findByIdAndCustomerId(Long id, Long customerId);
 
-    @EntityGraph(attributePaths = {"pickupArea", "dropoffArea", "customer"})
+    @EntityGraph(attributePaths = {"customer"})
     Optional<Order> findByTrackingNumberIgnoreCase(String trackingNumber);
 
     boolean existsByTrackingNumber(String trackingNumber);
@@ -30,16 +30,16 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     long countByFinancialStatusAndOrderStatus(FinancialStatus financialStatus, OrderStatus orderStatus);
 
-    @EntityGraph(attributePaths = {"pickupArea", "dropoffArea", "customer"})
+    @EntityGraph(attributePaths = {"customer"})
     List<Order> findByFinancialStatusInOrderByUpdatedAtDesc(List<FinancialStatus> financialStatuses);
 
-    @EntityGraph(attributePaths = {"pickupArea", "dropoffArea", "customer"})
+    @EntityGraph(attributePaths = {"customer"})
     List<Order> findTop10ByOrderByCreatedAtDesc();
 
-    @EntityGraph(attributePaths = {"pickupArea", "dropoffArea", "customer"})
+    @EntityGraph(attributePaths = {"customer"})
     List<Order> findByFinancialStatusAndOrderStatusOrderByUpdatedAtDesc(FinancialStatus financialStatus, OrderStatus orderStatus);
 
-    @EntityGraph(attributePaths = {"pickupArea", "dropoffArea", "customer"})
+    @EntityGraph(attributePaths = {"customer"})
     List<Order> findByOrderStatusOrderByUpdatedAtDesc(OrderStatus orderStatus);
 
     long countByOrderStatus(OrderStatus orderStatus);

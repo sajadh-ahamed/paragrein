@@ -62,7 +62,7 @@ public class PickupTaskSummaryResponse {
         return senderPhone;
     }
 
-    public String getPickupAreaName() {
+    public String getPickupAddress() {
         return pickupAddress;
     }
 
@@ -70,7 +70,7 @@ public class PickupTaskSummaryResponse {
         return receiverName;
     }
 
-    public String getDropoffAreaName() {
+    public String getDropoffAddress() {
         return dropoffAddress;
     }
 

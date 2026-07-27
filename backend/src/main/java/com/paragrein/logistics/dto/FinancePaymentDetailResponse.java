@@ -79,11 +79,11 @@ public class FinancePaymentDetailResponse extends FinancePaymentSummaryResponse 
         return receiverAddress;
     }
 
-    public String getPickupAreaName() {
+    public String getPickupAddress() {
         return pickupAddress;
     }
 
-    public String getDropoffAreaName() {
+    public String getDropoffAddress() {
         return dropoffAddress;
     }
 

@@ -64,7 +64,7 @@ public class DriverDeliveryTaskSummaryResponse {
         return receiverAddress;
     }
 
-    public String getDropoffAreaName() {
+    public String getDropoffAddress() {
         return dropoffAddress;
     }
 

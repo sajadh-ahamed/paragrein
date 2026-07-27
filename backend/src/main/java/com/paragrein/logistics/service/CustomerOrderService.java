@@ -65,7 +65,6 @@ public class CustomerOrderService {
             AuditLogRepository auditLogRepository,
             NotificationRepository notificationRepository,
             UserRepository userRepository,
-            ServiceAreaService serviceAreaService,
             PricingService pricingService) {
         this.orderRepository = orderRepository;
         this.paymentRepository = paymentRepository;

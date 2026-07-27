@@ -36,7 +36,6 @@ class CustomerOrderServiceTest {
                 mock(AuditLogRepository.class),
                 mock(NotificationRepository.class),
                 mock(UserRepository.class),
-                null,
                 null
         );
     }

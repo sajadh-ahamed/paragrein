@@ -53,7 +53,7 @@ public class AdminDeliveryAssignmentSummaryResponse {
         return receiverName;
     }
 
-    public String getDropoffAreaName() {
+    public String getDropoffAddress() {
         return dropoffAddress;
     }
 

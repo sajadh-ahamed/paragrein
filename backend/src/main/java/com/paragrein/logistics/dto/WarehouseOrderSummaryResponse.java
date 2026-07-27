@@ -71,11 +71,11 @@ public class WarehouseOrderSummaryResponse {
         return parcelWeightKg;
     }
 
-    public String getPickupAreaName() {
+    public String getPickupAddress() {
         return pickupAddress;
     }
 
-    public String getDropoffAreaName() {
+    public String getDropoffAddress() {
         return dropoffAddress;
     }
 

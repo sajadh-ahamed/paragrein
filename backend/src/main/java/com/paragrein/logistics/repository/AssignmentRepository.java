@@ -23,38 +23,38 @@ public interface AssignmentRepository extends JpaRepository<Assignment, Long> {
             AssignmentStatus assignmentStatus
     );
 
-    @EntityGraph(attributePaths = {"order", "order.customer", "order.pickupArea", "order.dropoffArea", "assignedToUser", "assignedByUser"})
+    @EntityGraph(attributePaths = {"order", "order.customer", "assignedToUser", "assignedByUser"})
     List<Assignment> findByAssignmentTypeAndAssignmentStatusInOrderByAssignedAtDesc(
             AssignmentType assignmentType,
             Collection<AssignmentStatus> assignmentStatuses
     );
 
     @Override
-    @EntityGraph(attributePaths = {"order", "order.customer", "order.pickupArea", "order.dropoffArea", "assignedToUser", "assignedByUser"})
+    @EntityGraph(attributePaths = {"order", "order.customer", "assignedToUser", "assignedByUser"})
     Optional<Assignment> findById(Long id);
 
     long countByAssignmentTypeAndAssignmentStatusIn(AssignmentType assignmentType, Collection<AssignmentStatus> assignmentStatuses);
 
-    @EntityGraph(attributePaths = {"order", "order.customer", "order.pickupArea", "order.dropoffArea", "assignedToUser", "assignedByUser"})
+    @EntityGraph(attributePaths = {"order", "order.customer", "assignedToUser", "assignedByUser"})
     List<Assignment> findByAssignmentTypeAndAssignedToUserIdAndAssignmentStatusInOrderByAssignedAtDesc(
             AssignmentType assignmentType,
             Long assignedToUserId,
             Collection<AssignmentStatus> assignmentStatuses
     );
 
-    @EntityGraph(attributePaths = {"order", "order.customer", "order.pickupArea", "order.dropoffArea", "assignedToUser", "assignedByUser"})
+    @EntityGraph(attributePaths = {"order", "order.customer", "assignedToUser", "assignedByUser"})
     List<Assignment> findByAssignmentTypeAndAssignedToUserIdOrderByAssignedAtDesc(AssignmentType assignmentType, Long assignedToUserId);
 
-    @EntityGraph(attributePaths = {"order", "order.customer", "order.pickupArea", "order.dropoffArea", "assignedToUser", "assignedByUser"})
+    @EntityGraph(attributePaths = {"order", "order.customer", "assignedToUser", "assignedByUser"})
     Optional<Assignment> findByIdAndAssignedToUserId(Long id, Long assignedToUserId);
 
-    @EntityGraph(attributePaths = {"order", "order.customer", "order.pickupArea", "order.dropoffArea", "assignedToUser", "assignedByUser"})
+    @EntityGraph(attributePaths = {"order", "order.customer", "assignedToUser", "assignedByUser"})
     Optional<Assignment> findFirstByOrderIdAndAssignmentTypeOrderByAssignedAtDesc(Long orderId, AssignmentType assignmentType);
 
-    @EntityGraph(attributePaths = {"order", "order.customer", "order.pickupArea", "order.dropoffArea", "assignedToUser", "assignedByUser"})
+    @EntityGraph(attributePaths = {"order", "order.customer", "assignedToUser", "assignedByUser"})
     List<Assignment> findAllByOrderByAssignedAtDesc();
 
-    @EntityGraph(attributePaths = {"order", "order.customer", "order.pickupArea", "order.dropoffArea", "assignedToUser", "assignedByUser"})
+    @EntityGraph(attributePaths = {"order", "order.customer", "assignedToUser", "assignedByUser"})
     List<Assignment> findByOrderIdOrderByAssignedAtDesc(Long orderId);
 
     long countByAssignmentTypeAndAssignedToUserIdAndAssignmentStatus(

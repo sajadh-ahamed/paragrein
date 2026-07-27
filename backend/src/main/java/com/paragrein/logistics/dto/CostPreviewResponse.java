@@ -9,8 +9,8 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class CostPreviewResponse {
 
-    private String pickupAreaName;
-    private String dropoffAreaName;
+    private String pickupAddress;
+    private String dropoffAddress;
     private BigDecimal routeDistanceKm;
     private BigDecimal baseRate;
     private BigDecimal perKmRate;

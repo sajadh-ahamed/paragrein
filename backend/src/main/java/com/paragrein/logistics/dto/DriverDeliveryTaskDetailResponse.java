@@ -40,7 +40,7 @@ public class DriverDeliveryTaskDetailResponse extends DriverDeliveryTaskSummaryR
         return senderPhone;
     }
 
-    public String getPickupAreaName() {
+    public String getPickupAddress() {
         return pickupAddress;
     }
 

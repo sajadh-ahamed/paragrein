@@ -56,7 +56,7 @@ public class ReadyForDispatchOrderResponse {
         return receiverName;
     }
 
-    public String getDropoffAreaName() {
+    public String getDropoffAddress() {
         return dropoffAddress;
     }
 
