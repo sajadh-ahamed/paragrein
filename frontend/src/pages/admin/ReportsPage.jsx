@@ -190,40 +190,71 @@ function ReportsPage() {
       {error && <div className="mt-6 rounded-md border border-[#EF4444]/30 bg-[#EF4444]/10 px-4 py-3 text-sm text-[#FCA5A5]">{error}</div>}
 
       <section className="pg-panel mt-6 p-5">
-        <div className="grid gap-3 xl:grid-cols-[1.2fr_1fr_1fr_1fr_1fr_auto_auto_auto]">
+        <div className="flex flex-wrap items-end gap-4">
           <label className="block">
             <span className="pg-label">Report Type</span>
             <select value={reportType} onChange={(event) => setReportType(event.target.value)} className="pg-field mt-2">
               {reportTypes.map((type) => <option key={type.value} value={type.value}>{type.label}</option>)}
             </select>
           </label>
-          <label className="block">
-            <span className="pg-label">Date From</span>
-            <input type="date" name="dateFrom" value={filters.dateFrom} onChange={updateFilter} className="pg-field mt-2" />
-          </label>
-          <label className="block">
-            <span className="pg-label">Date To</span>
-            <input type="date" name="dateTo" value={filters.dateTo} onChange={updateFilter} className="pg-field mt-2" />
-          </label>
-          <label className="block">
-            <span className="pg-label">Daily Date</span>
-            <input type="date" name="date" value={filters.date} onChange={updateFilter} className="pg-field mt-2" />
-          </label>
-          <label className="block">
-            <span className="pg-label">Employee Role</span>
-            <select name="role" value={filters.role} onChange={updateFilter} className="pg-field mt-2">
-              <option value="">All roles</option>
-              <option value="PICKUP_AGENT">Pickup Agent</option>
-              <option value="WAREHOUSE_STAFF">Warehouse Staff</option>
-              <option value="DRIVER">Driver</option>
-              <option value="FINANCE_OFFICER">Finance Officer</option>
-            </select>
-          </label>
-          <PrimaryButton onClick={loadReport}>Generate</PrimaryButton>
-          <SecondaryButton onClick={resetFilters}>Reset</SecondaryButton>
-          <SecondaryButton onClick={exportCsv} disabled={!canExport || exporting}>
-            {exporting ? 'Exporting...' : 'Export CSV'}
-          </SecondaryButton>
+
+          {['completed', 'warehouse', 'rejected'].includes(reportType) && (
+            <>
+              <label className="block">
+                <span className="pg-label">Date From</span>
+                <input type="date" name="dateFrom" value={filters.dateFrom} onChange={updateFilter} className="pg-field mt-2" />
+              </label>
+              <label className="block">
+                <span className="pg-label">Date To</span>
+                <input type="date" name="dateTo" value={filters.dateTo} onChange={updateFilter} className="pg-field mt-2" />
+              </label>
+            </>
+          )}
+
+          {reportType === 'daily' && (
+            <label className="block">
+              <span className="pg-label">Daily Date</span>
+              <input type="date" name="date" value={filters.date} onChange={updateFilter} className="pg-field mt-2" />
+            </label>
+          )}
+
+          {reportType === 'monthly' && (
+            <>
+              <label className="block">
+                <span className="pg-label">Year</span>
+                <input type="number" name="year" value={filters.year} onChange={updateFilter} className="pg-field mt-2" />
+              </label>
+              <label className="block">
+                <span className="pg-label">Month</span>
+                <select name="month" value={filters.month} onChange={updateFilter} className="pg-field mt-2">
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => <option key={m} value={m}>{new Date(0, m - 1).toLocaleString('default', { month: 'long' })}</option>)}
+                </select>
+              </label>
+            </>
+          )}
+
+          {reportType === 'workload' && (
+            <label className="block">
+              <span className="pg-label">Employee Role</span>
+              <select name="role" value={filters.role} onChange={updateFilter} className="pg-field mt-2">
+                <option value="">All roles</option>
+                <option value="PICKUP_AGENT">Pickup Agent</option>
+                <option value="WAREHOUSE_STAFF">Warehouse Staff</option>
+                <option value="DRIVER">Driver</option>
+                <option value="FINANCE_OFFICER">Finance Officer</option>
+              </select>
+            </label>
+          )}
+
+          <div className="flex-grow" />
+
+          <div className="flex gap-3">
+            <PrimaryButton onClick={loadReport}>Generate</PrimaryButton>
+            <SecondaryButton onClick={resetFilters}>Reset</SecondaryButton>
+            <SecondaryButton onClick={exportCsv} disabled={!canExport || exporting}>
+              {exporting ? 'Exporting...' : 'Export CSV'}
+            </SecondaryButton>
+          </div>
         </div>
         <p className="mt-3 text-xs text-[#94A3B8]">Daily summary uses the single date field. Monthly summary uses the current month by default. CSV export is available for completed delivery, warehouse, and workload reports.</p>
       </section>
