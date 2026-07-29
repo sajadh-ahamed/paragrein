@@ -1,14 +1,7 @@
-import { apiRequest } from './apiClient.js';
+import { apiRequest, buildQueryString } from './apiClient.js';
 
 export function getEmployees(filters = {}) {
-  const params = new URLSearchParams();
-  Object.entries(filters).forEach(([key, value]) => {
-    if (value) {
-      params.set(key, value);
-    }
-  });
-  const query = params.toString();
-  return apiRequest(`/admin/employees${query ? `?${query}` : ''}`);
+  return apiRequest(`/admin/employees${buildQueryString(filters)}`);
 }
 
 export function getEmployeeDetail(userId) {

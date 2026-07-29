@@ -1,73 +1,51 @@
-import { apiRequest } from './apiClient.js';
-import { getToken } from '../utils/authStorage.js';
-
-const API_BASE_URL = 'http://localhost:8080/api';
-
-function query(filters = {}) {
-  const params = new URLSearchParams();
-  Object.entries(filters).forEach(([key, value]) => {
-    if (value) {
-      params.set(key, value);
-    }
-  });
-  const text = params.toString();
-  return text ? `?${text}` : '';
-}
+import {
+  apiRequest,
+  apiDownload,
+  buildQueryString,
+} from './apiClient.js';
 
 export function getAdminReportSummary(filters) {
-  return apiRequest(`/admin/reports/summary${query(filters)}`);
+  return apiRequest(`/admin/reports/summary${buildQueryString(filters)}`);
 }
 
 export function getDailyReport(date) {
-  return apiRequest(`/admin/reports/daily${query({ date })}`);
+  return apiRequest(`/admin/reports/daily${buildQueryString({ date })}`);
 }
 
 export function getMonthlyReport(year, month) {
-  return apiRequest(`/admin/reports/monthly${query({ year, month })}`);
+  return apiRequest(`/admin/reports/monthly${buildQueryString({ year, month })}`);
 }
 
 export function getCompletedDeliveryReport(filters) {
-  return apiRequest(`/admin/reports/completed-deliveries${query(filters)}`);
+  return apiRequest(
+    `/admin/reports/completed-deliveries${buildQueryString(filters)}`,
+  );
 }
 
 export function getWarehouseReport(filters) {
-  return apiRequest(`/admin/reports/warehouse${query(filters)}`);
+  return apiRequest(`/admin/reports/warehouse${buildQueryString(filters)}`);
 }
 
 export function getEmployeeWorkloadReport(filters) {
-  return apiRequest(`/admin/reports/employee-workload${query(filters)}`);
+  return apiRequest(`/admin/reports/employee-workload${buildQueryString(filters)}`);
 }
 
 export function getRejectedOrderReport(filters) {
-  return apiRequest(`/admin/reports/rejected-orders${query(filters)}`);
+  return apiRequest(`/admin/reports/rejected-orders${buildQueryString(filters)}`);
 }
 
-export async function downloadAdminReportCsv(reportType, filters = {}) {
+export async function downloadAdminReportPdf(reportType, filters = {}) {
   const endpoints = {
-    completed: '/admin/reports/completed-deliveries/export-csv',
-    warehouse: '/admin/reports/warehouse/export-csv',
-    workload: '/admin/reports/employee-workload/export-csv',
+    completed: '/admin/reports/completed-deliveries/export-pdf',
+    warehouse: '/admin/reports/warehouse/export-pdf',
+    workload: '/admin/reports/employee-workload/export-pdf',
   };
   const endpoint = endpoints[reportType];
   if (!endpoint) {
-    throw new Error('CSV export is not available for this report type yet.');
+    throw new Error('PDF export is not available for this report type yet.');
   }
-  return downloadCsv(`${API_BASE_URL}${endpoint}${query(filters)}`);
-}
-
-async function downloadCsv(url) {
-  const token = getToken();
-  const response = await fetch(url, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
-  if (!response.ok) {
-    throw new Error('CSV export failed. Please try again.');
-  }
-  const blob = await response.blob();
-  const disposition = response.headers.get('content-disposition') || '';
-  const match = disposition.match(/filename="(.+)"/);
-  return {
-    blob,
-    fileName: match?.[1] || 'report.csv',
-  };
+  return apiDownload(
+    `${endpoint}${buildQueryString(filters)}`,
+    `${reportType}-report.pdf`,
+  );
 }

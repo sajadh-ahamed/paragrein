@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  downloadAdminReportCsv,
+  downloadAdminReportPdf,
   getAdminReportSummary,
   getCompletedDeliveryReport,
   getDailyReport,
@@ -44,7 +44,7 @@ function ReportsPage() {
   const [dailyMonthly, setDailyMonthly] = useState(null);
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [exporting, setExporting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false); // Renaming for clarity
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -90,14 +90,14 @@ function ReportsPage() {
     }
   }
 
-  async function exportCsv() {
+  async function exportPdf() { // Renamed from exportCsv
     try {
-      setExporting(true);
+      setIsExporting(true);
       if (!validateFilters()) {
         return;
       }
       const range = { dateFrom: filters.dateFrom, dateTo: filters.dateTo, role: filters.role };
-      const { blob, fileName } = await downloadAdminReportCsv(reportType, range);
+      const { blob, fileName } = await downloadAdminReportPdf(reportType, range); // Use new PDF function
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -107,7 +107,7 @@ function ReportsPage() {
     } catch (apiError) {
       setError(apiError.message);
     } finally {
-      setExporting(false);
+      setIsExporting(false);
     }
   }
 
@@ -163,13 +163,13 @@ function ReportsPage() {
     if (filters.dateFrom && filters.dateTo && filters.dateFrom > filters.dateTo) {
       setError('Date from must be before or equal to date to.');
       setLoading(false);
-      setExporting(false);
+      setIsExporting(false);
       return false;
     }
     if (Number(filters.month) < 1 || Number(filters.month) > 12) {
       setError('Month must be between 1 and 12.');
       setLoading(false);
-      setExporting(false);
+      setIsExporting(false);
       return false;
     }
     return true;
@@ -185,7 +185,7 @@ function ReportsPage() {
       <PageHeader
         eyebrow="Admin Reports"
         title="Operational Reports"
-        description="Generate local operational reports and export clear CSV files."
+        description="Generate local operational reports and export professional PDF files." // Updated description
       />
       {error && <div className="mt-6 rounded-md border border-[#EF4444]/30 bg-[#EF4444]/10 px-4 py-3 text-sm text-[#FCA5A5]">{error}</div>}
 
@@ -251,12 +251,12 @@ function ReportsPage() {
           <div className="flex gap-3">
             <PrimaryButton onClick={loadReport}>Generate</PrimaryButton>
             <SecondaryButton onClick={resetFilters}>Reset</SecondaryButton>
-            <SecondaryButton onClick={exportCsv} disabled={!canExport || exporting}>
-              {exporting ? 'Exporting...' : 'Export CSV'}
+            <SecondaryButton onClick={exportPdf} disabled={!canExport || isExporting}>
+              {isExporting ? 'Exporting...' : 'Download PDF'}
             </SecondaryButton>
           </div>
         </div>
-        <p className="mt-3 text-xs text-[#94A3B8]">Daily summary uses the single date field. Monthly summary uses the current month by default. CSV export is available for completed delivery, warehouse, and workload reports.</p>
+        <p className="mt-3 text-xs text-[#94A3B8]">Daily summary uses the single date field. Monthly summary uses the current month by default. PDF export is available for completed delivery, warehouse, and workload reports.</p>
       </section>
 
       <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

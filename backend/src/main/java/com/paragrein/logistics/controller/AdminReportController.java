@@ -119,10 +119,35 @@ public class AdminReportController {
         return csv("employee-workload.csv", reportService.exportEmployeeWorkloadCsv(role, employeeId, authentication));
     }
 
+    @GetMapping("/completed-deliveries/export-pdf")
+    public ResponseEntity<byte[]> exportCompletedDeliveriesPdf(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
+            Authentication authentication
+    ) {
+        return pdf("completed-deliveries.pdf", reportService.exportCompletedDeliveriesPdf(dateFrom, dateTo, authentication));
+    }
+
+    @GetMapping("/employee-workload/export-pdf")
+    public ResponseEntity<byte[]> exportEmployeeWorkloadPdf(
+            @RequestParam(required = false) String role,
+            @RequestParam(required = false) Long employeeId,
+            Authentication authentication
+    ) {
+        return pdf("employee-workload.pdf", reportService.exportEmployeeWorkloadPdf(role, employeeId, authentication));
+    }
+
     private ResponseEntity<String> csv(String fileName, String content) {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
                 .contentType(MediaType.parseMediaType("text/csv"))
+                .body(content);
+    }
+
+    private ResponseEntity<byte[]> pdf(String fileName, byte[] content) {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
                 .body(content);
     }
 }

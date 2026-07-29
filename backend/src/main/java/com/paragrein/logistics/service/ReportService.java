@@ -33,6 +33,9 @@ import com.paragrein.logistics.repository.OrderRepository;
 import com.paragrein.logistics.repository.PaymentRepository;
 import com.paragrein.logistics.repository.WarehouseRecordRepository;
 import com.paragrein.logistics.security.SecurityUserUtil;
+import com.paragrein.logistics.util.PdfReportGenerator;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -40,6 +43,12 @@ import java.time.YearMonth;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.PDPageContentStream;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -249,6 +258,42 @@ public class ReportService {
                         .map(row -> List.of(row.getTrackingNumber(), row.getCustomerName(), text(row.getTotalAmount()), text(row.getAdvanceAmount()), text(row.getBalanceAmount()), text(row.getFinancialStatus()), text(row.getOrderStatus())))
                         .toList()
         );
+    }
+
+    @Transactional
+    public byte[] exportCompletedDeliveriesPdf(LocalDate dateFrom, LocalDate dateTo, Authentication authentication) {
+        User user = SecurityUserUtil.requireCurrentUser(authentication);
+        validateDateRange(dateFrom, dateTo);
+        saveAudit(user, "REPORT_EXPORTED", "Report", null, "Exported completed delivery PDF.");
+        
+        List<String> headers = List.of("Tracking Number", "Customer", "Receiver", "Driver", "Delivered At", "Total Amount", "Advance Amount", "Balance Collected", "Financial Status");
+        List<List<String>> rows = completedDeliveryRows(dateFrom, dateTo).stream()
+                .map(row -> List.of(row.getTrackingNumber(), row.getCustomerName(), row.getReceiverName(), row.getDriverName(), text(row.getDeliveredAt()), text(row.getTotalAmount()), text(row.getAdvanceAmount()), text(row.getBalanceCollected()), text(row.getFinancialStatus())))
+                .toList();
+
+        try {
+            return new PdfReportGenerator("Completed Deliveries Report", headers, rows, user, dateFrom, dateTo).generate();
+        } catch (IOException e) {
+            throw new AppException("Failed to generate PDF report.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Transactional
+    public byte[] exportEmployeeWorkloadPdf(String role, Long employeeId, Authentication authentication) {
+        User user = SecurityUserUtil.requireCurrentUser(authentication);
+        saveAudit(user, "REPORT_EXPORTED", "Report", null, "Exported employee workload PDF.");
+        
+        List<String> headers = List.of("Employee Name", "Role", "Employee Number", "Assigned", "Accepted", "Completed", "Availability");
+        List<List<String>> rows = employeeWorkloadRows(role, employeeId).stream()
+                .map(row -> List.of(row.getEmployeeName(), text(row.getRole()), row.getEmployeeNumber(), text(row.getAssignedCount()), text(row.getAcceptedCount()), text(row.getCompletedCount()), text(row.getCurrentAvailability())))
+                .toList();
+
+        try {
+            // For employee workload, the date range is not applicable, so passing nulls.
+            return new PdfReportGenerator("Employee Performance Report", headers, rows, user, null, null).generate();
+        } catch (IOException e) {
+            throw new AppException("Failed to generate PDF report.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     private ReportSummaryResponse buildSummary(List<Order> orders) {

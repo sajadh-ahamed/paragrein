@@ -25,6 +25,18 @@ import { clearAuthData, getToken } from '../utils/authStorage.js'; //this file u
 
 const API_BASE_URL = 'http://localhost:8080/api'; //Instead of writing fetch("http://localhost:8080/api/auth/login") everywhere
 
+// Helper to build query strings from a filter object
+export function buildQueryString(filters = {}) {
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== null && value !== undefined && value !== '') {
+      params.set(key, value);
+    }
+  });
+  const text = params.toString();
+  return text ? `?${text}` : '';
+}
+
 
 //export function so that another file can do: import { apiRequest } from './apiClient.js';
 //why used word "asyc" because this function not reply soon need to wait for response inside this function i may use await (await only can use with in async function)
@@ -48,7 +60,7 @@ export async function apiRequest(path, options = {}) { //path is just parameter 
     headers,
   });
 
-  const contentType = response.headers.get('content-type') || ''; 
+  const contentType = response.headers.get('content-type') || '';
   const data = contentType.includes('application/json') ? await response.json() : null;
 
   if (!response.ok) { //response.ok is a property provided by fetch().
@@ -61,4 +73,39 @@ export async function apiRequest(path, options = {}) { //path is just parameter 
   }
 
   return data;
+}
+
+export async function apiDownload(path, defaultFileName = 'download') {
+  const token = getToken();
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+
+  if (!response.ok) {
+    if (response.status === 401) {
+      clearAuthData();
+    }
+    // Try to get error message from JSON body if available
+    const contentType = response.headers.get('content-type') || '';
+    let errorMessage = 'File download failed. Please try again.';
+    if (contentType.includes('application/json')) {
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData?.message || errorMessage;
+      } catch (e) {
+        // Ignore if parsing fails, use default message
+      }
+    }
+    const requestError = new Error(errorMessage);
+    requestError.status = response.status;
+    throw requestError;
+  }
+
+  const blob = await response.blob();
+  const disposition = response.headers.get('content-disposition') || '';
+  const match = disposition.match(/filename="(.+)"/);
+  return {
+    blob,
+    fileName: match?.[1] || defaultFileName,
+  };
 }
