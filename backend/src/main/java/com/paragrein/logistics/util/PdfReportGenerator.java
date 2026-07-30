@@ -1,5 +1,6 @@
 package com.paragrein.logistics.util;
 
+import com.paragrein.logistics.dto.RevenueReportResponse;
 import com.paragrein.logistics.entity.User;
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
@@ -9,6 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.math.BigDecimal;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
@@ -19,18 +21,20 @@ import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
 public class PdfReportGenerator {
 
-    private final String title;
-    private final List<String> headers;
-    private final List<List<String>> rows;
-    private final User generatedBy;
-    private final LocalDate dateFrom;
-    private final LocalDate dateTo;
+    private String title;
+    private List<String> headers;
+    private List<List<String>> rows;
+    private User generatedBy;
+    private LocalDate dateFrom;
+    private LocalDate dateTo;
 
     private final PDType1Font FONT_BOLD = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
     private final PDType1Font FONT_REGULAR = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
     
     private final float MARGIN = 50;
     private float yPosition;
+    private RevenueReportResponse summaryData;
+
 
     public PdfReportGenerator(String title, List<String> headers, List<List<String>> rows, User generatedBy, LocalDate dateFrom, LocalDate dateTo) {
         this.title = title;
@@ -40,6 +44,40 @@ public class PdfReportGenerator {
         this.dateFrom = dateFrom;
         this.dateTo = dateTo;
     }
+    
+    private PdfReportGenerator(String title, RevenueReportResponse summaryData, User generatedBy, LocalDate dateFrom, LocalDate dateTo) {
+        this.title = title;
+        this.summaryData = summaryData;
+        this.generatedBy = generatedBy;
+        this.dateFrom = dateFrom;
+        this.dateTo = dateTo;
+    }
+
+    public static byte[] generateFinancialSummary(String title, RevenueReportResponse summaryData, User generatedBy, LocalDate dateFrom, LocalDate dateTo) throws IOException {
+        PdfReportGenerator generator = new PdfReportGenerator(title, summaryData, generatedBy, dateFrom, dateTo);
+        return generator.generateSummary();
+    }
+
+    private byte[] generateSummary() throws IOException {
+        try (PDDocument document = new PDDocument(); ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            PDPage page = new PDPage(new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth()));
+            document.addPage(page);
+            
+            this.yPosition = page.getMediaBox().getHeight() - MARGIN;
+
+            try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
+                drawHeader(document, contentStream);
+                drawTitle(contentStream, page);
+                drawMetadata(contentStream);
+                drawSummaryData(contentStream);
+                drawFooter(contentStream, page, 1, 1);
+            }
+
+            document.save(outputStream);
+            return outputStream.toByteArray();
+        }
+    }
+
 
     public byte[] generate() throws IOException {
         try (PDDocument document = new PDDocument(); ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
@@ -104,11 +142,35 @@ public class PdfReportGenerator {
         }
         
         writeText(contentStream, "Report Period  : " + period, FONT_REGULAR, 10, MARGIN, yPosition);
-        yPosition -= 15;
-        writeText(contentStream, "Total Records  : " + rows.size(), FONT_REGULAR, 10, MARGIN, yPosition);
+        if (rows != null) {
+            yPosition -= 15;
+            writeText(contentStream, "Total Records  : " + rows.size(), FONT_REGULAR, 10, MARGIN, yPosition);
+        }
         yPosition -= 20;
         drawHorizontalLine(contentStream, MARGIN, yPosition, 742);
     }
+    
+    private void drawSummaryData(PDPageContentStream contentStream) throws IOException {
+        yPosition -= 20;
+
+        float keyX = MARGIN + 20;
+        float valueX = MARGIN + 220;
+
+        drawSummaryRow(contentStream, "Advance Received", summaryData.getTotalAdvanceReceived());
+        drawSummaryRow(contentStream, "Balance Collected", summaryData.getTotalBalanceCollected());
+        drawSummaryRow(contentStream, "Total Revenue", summaryData.getTotalRevenue());
+        drawSummaryRow(contentStream, "Outstanding Balance", summaryData.getOutstandingBalanceTotal());
+        drawSummaryRow(contentStream, "Verified Advances", BigDecimal.valueOf(summaryData.getVerifiedAdvanceCount()));
+        drawSummaryRow(contentStream, "Fully Settled Orders", BigDecimal.valueOf(summaryData.getFullySettledCount()));
+    }
+
+    private void drawSummaryRow(PDPageContentStream contentStream, String key, BigDecimal value) throws IOException {
+        writeText(contentStream, key, FONT_BOLD, 12, MARGIN + 20, yPosition);
+        writeText(contentStream, ":", FONT_REGULAR, 12, MARGIN + 200, yPosition);
+        writeText(contentStream, String.format("%,.2f", value), FONT_REGULAR, 12, MARGIN + 220, yPosition);
+        yPosition -= 25;
+    }
+
 
     private void drawTable(PDPageContentStream contentStream) throws IOException {
         yPosition -= 20;

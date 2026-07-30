@@ -25,6 +25,7 @@ const reportTypes = [
   { value: 'warehouse', label: 'Warehouse Report' },
   { value: 'workload', label: 'Employee Workload' },
   { value: 'rejected', label: 'Rejected Orders' },
+  { value: 'financial-summary', label: 'Financial Summary' },
 ];
 
 const today = new Date().toISOString().slice(0, 10);
@@ -82,6 +83,8 @@ function ReportsPage() {
         setRows(await getEmployeeWorkloadReport({ role: filters.role }));
       } else if (reportType === 'rejected') {
         setRows(await getRejectedOrderReport(range));
+      } else if (reportType === 'financial-summary') {
+        setRows([]);
       }
     } catch (apiError) {
       setError(apiError.message);
@@ -116,11 +119,7 @@ function ReportsPage() {
       return [
         { key: 'trackingNumber', header: 'Tracking', render: (row) => <span className="font-bold text-[#F8FAFC]">{row.trackingNumber}</span> },
         { key: 'customerName', header: 'Customer' },
-        { key: 'receiverName', header: 'Receiver' },
         { key: 'driverName', header: 'Driver' },
-        { key: 'deliveredAt', header: 'Delivered', render: (row) => formatDateTime(row.deliveredAt) },
-        { key: 'totalAmount', header: 'Total', render: (row) => formatMoney(row.totalAmount) },
-        { key: 'balanceCollected', header: 'Balance', render: (row) => formatMoney(row.balanceCollected) },
         { key: 'financialStatus', header: 'Finance', render: (row) => <StatusBadge variant={statusVariant(row.financialStatus)}>{formatStatus(row.financialStatus)}</StatusBadge> },
       ];
     }
@@ -157,7 +156,7 @@ function ReportsPage() {
     ];
   }, [reportType]);
 
-  const canExport = ['completed', 'warehouse', 'workload'].includes(reportType);
+  const canExport = ['completed', 'workload', 'financial-summary'].includes(reportType);
 
   function validateFilters() {
     if (filters.dateFrom && filters.dateTo && filters.dateFrom > filters.dateTo) {
@@ -198,7 +197,7 @@ function ReportsPage() {
             </select>
           </label>
 
-          {['completed', 'warehouse', 'rejected'].includes(reportType) && (
+          {['completed', 'warehouse', 'rejected', 'financial-summary'].includes(reportType) && (
             <>
               <label className="block">
                 <span className="pg-label">Date From</span>
@@ -256,7 +255,7 @@ function ReportsPage() {
             </SecondaryButton>
           </div>
         </div>
-        <p className="mt-3 text-xs text-[#94A3B8]">Daily summary uses the single date field. Monthly summary uses the current month by default. PDF export is available for completed delivery, warehouse, and workload reports.</p>
+        <p className="mt-3 text-xs text-[#94A3B8]">Daily summary uses the single date field. Monthly summary uses the current month by default. PDF export is available for completed delivery and workload reports.</p>
       </section>
 
       <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

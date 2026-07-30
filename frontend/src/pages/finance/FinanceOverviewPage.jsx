@@ -39,7 +39,6 @@ function FinanceOverviewPage() {
         actions={(
           <div className="flex flex-wrap gap-3">
             <Link to="/finance/payment-verification"><PrimaryButton>Review Pending</PrimaryButton></Link>
-            <Link to="/finance/reports"><PrimaryButton>Open Reports</PrimaryButton></Link>
           </div>
         )}
       />
@@ -58,7 +57,7 @@ function FinanceOverviewPage() {
       <section className="pg-panel mt-6 p-5">
         <h2 className="text-xl font-bold">Finance Controls</h2>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-[#94A3B8]">
-          Finance officers verify or reject customer advance payment submissions, review payment history, monitor outstanding balances, and open revenue reports.
+          Finance officers verify or reject customer advance payment submissions, review payment history, and monitor outstanding balances.
         </p>
       </section>
     </DashboardLayout>

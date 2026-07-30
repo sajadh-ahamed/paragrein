@@ -33,7 +33,6 @@ const menus = {
       to: "/finance/outstanding-balances",
       enabled: true,
     },
-    { label: "Reports", to: "/finance/reports", enabled: true },
     { label: "My Issues", to: "/issues/my", enabled: true },
   ],
   PICKUP_AGENT: [

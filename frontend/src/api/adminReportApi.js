@@ -39,6 +39,7 @@ export async function downloadAdminReportPdf(reportType, filters = {}) {
     completed: '/admin/reports/completed-deliveries/export-pdf',
     warehouse: '/admin/reports/warehouse/export-pdf',
     workload: '/admin/reports/employee-workload/export-pdf',
+    'financial-summary': '/admin/reports/financial-summary/export-pdf',
   };
   const endpoint = endpoints[reportType];
   if (!endpoint) {

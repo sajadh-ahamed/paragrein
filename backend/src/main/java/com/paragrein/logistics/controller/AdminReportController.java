@@ -137,6 +137,15 @@ public class AdminReportController {
         return pdf("employee-workload.pdf", reportService.exportEmployeeWorkloadPdf(role, employeeId, authentication));
     }
 
+    @GetMapping("/financial-summary/export-pdf")
+    public ResponseEntity<byte[]> exportFinancialSummaryPdf(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
+            Authentication authentication
+    ) {
+        return pdf("financial-summary.pdf", reportService.exportFinancialSummaryPdf(dateFrom, dateTo, authentication));
+    }
+
     private ResponseEntity<String> csv(String fileName, String content) {
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")

@@ -24,7 +24,6 @@ import DeliveryHistoryPage from './pages/driver/DeliveryHistoryPage.jsx';
 import DeliveryTaskDetailPage from './pages/driver/DeliveryTaskDetailPage.jsx';
 import DriverOverviewPage from './pages/driver/DriverOverviewPage.jsx';
 import FinanceOverviewPage from './pages/finance/FinanceOverviewPage.jsx';
-import FinanceReportsPage from './pages/finance/FinanceReportsPage.jsx';
 import OutstandingBalancesPage from './pages/finance/OutstandingBalancesPage.jsx';
 import PaymentDetailPage from './pages/finance/PaymentDetailPage.jsx';
 import PaymentHistoryPage from './pages/finance/PaymentHistoryPage.jsx';
@@ -205,14 +204,6 @@ function App() {
           element={(
             <ProtectedRoute allowedRoles={['FINANCE_OFFICER']}>
               <OutstandingBalancesPage />
-            </ProtectedRoute>
-          )}
-        />
-        <Route
-          path="/finance/reports"
-          element={(
-            <ProtectedRoute allowedRoles={['FINANCE_OFFICER']}>
-              <FinanceReportsPage />
             </ProtectedRoute>
           )}
         />
