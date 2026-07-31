@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Service
@@ -53,6 +54,50 @@ public class PdfGenerationService {
         } catch (IOException e) {
             LOGGER.error("Error generating PDF report", e);
             // In a real app, you might throw a custom exception here
+            return new byte[0];
+        }
+    }
+
+    public byte[] generateSummaryReportPdf(String reportTitle, LinkedHashMap<String, String> filters,
+            LinkedHashMap<String, String> data) {
+        try (PDDocument document = new PDDocument(); ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            PDPage page = new PDPage(PDRectangle.A4);
+            document.addPage(page);
+
+            try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
+                drawHeader(document, contentStream);
+                contentStream.setStrokingColor(200 / 255f, 200 / 255f, 200 / 255f); // Light gray for lines
+                contentStream.setLineWidth(0.5f);
+                contentStream.moveTo(50, 740);
+                contentStream.lineTo(550, 740);
+                contentStream.stroke();
+
+                float yPosition = 710;
+                yPosition = drawReportTitle(contentStream, reportTitle, yPosition);
+                contentStream.moveTo(50, yPosition + 15);
+                contentStream.lineTo(550, yPosition + 15);
+                contentStream.stroke();
+
+                yPosition -= 10;
+                yPosition = drawFilters(contentStream, filters, yPosition);
+                contentStream.moveTo(50, yPosition + 15);
+                contentStream.lineTo(550, yPosition + 15);
+                contentStream.stroke();
+
+                yPosition -= 20;
+                contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 11);
+                for (Map.Entry<String, String> entry : data.entrySet()) {
+                    drawSummaryLine(contentStream, entry.getKey(), entry.getValue(), yPosition);
+                    yPosition -= 25;
+                }
+
+                drawFooter(contentStream);
+            }
+
+            document.save(outputStream);
+            return outputStream.toByteArray();
+        } catch (IOException e) {
+            LOGGER.error("Error generating summary PDF report", e);
             return new byte[0];
         }
     }
@@ -155,5 +200,21 @@ public class PdfGenerationService {
         contentStream.newLineAtOffset(500, 50);
         contentStream.showText("Page 1"); // Simple page number for now
         contentStream.endText();
+    }
+
+    private void drawSummaryLine(PDPageContentStream stream, String label, String value, float y) throws IOException {
+        stream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 11);
+        stream.beginText();
+        stream.newLineAtOffset(80, y);
+        stream.showText(label);
+        stream.endText();
+
+        stream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 11);
+        stream.beginText();
+        stream.newLineAtOffset(250, y);
+        stream.showText(":");
+        stream.newLineAtOffset(20, 0);
+        stream.showText(value);
+        stream.endText();
     }
 }

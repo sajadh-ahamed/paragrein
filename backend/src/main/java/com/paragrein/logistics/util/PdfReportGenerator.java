@@ -1,42 +1,38 @@
 package com.paragrein.logistics.util;
 
+import com.paragrein.logistics.dto.DailyReportResponse;
+import com.paragrein.logistics.dto.MonthlyReportResponse;
 import com.paragrein.logistics.dto.RevenueReportResponse;
 import com.paragrein.logistics.entity.User;
-import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.math.BigDecimal;
+import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.List;
-import java.math.BigDecimal;
+import java.util.Locale;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
-import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 
 public class PdfReportGenerator {
 
-    private String title;
-    private List<String> headers;
-    private List<List<String>> rows;
-    private User generatedBy;
-    private LocalDate dateFrom;
-    private LocalDate dateTo;
+    private final String title;
+    private final List<String> headers;
+    private final List<List<String>> rows;
+    private final User generatedBy;
+    private final LocalDate dateFrom;
+    private final LocalDate dateTo;
 
-    private final PDType1Font FONT_BOLD = new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD);
-    private final PDType1Font FONT_REGULAR = new PDType1Font(Standard14Fonts.FontName.HELVETICA);
-    
-    private final float MARGIN = 50;
-    private float yPosition;
-    private RevenueReportResponse summaryData;
-
-
-    public PdfReportGenerator(String title, List<String> headers, List<List<String>> rows, User generatedBy, LocalDate dateFrom, LocalDate dateTo) {
+    public PdfReportGenerator(String title, List<String> headers, List<List<String>> rows, User generatedBy,
+            LocalDate dateFrom, LocalDate dateTo) {
         this.title = title;
         this.headers = headers;
         this.rows = rows;
@@ -44,224 +40,207 @@ public class PdfReportGenerator {
         this.dateFrom = dateFrom;
         this.dateTo = dateTo;
     }
-    
-    private PdfReportGenerator(String title, RevenueReportResponse summaryData, User generatedBy, LocalDate dateFrom, LocalDate dateTo) {
-        this.title = title;
-        this.summaryData = summaryData;
-        this.generatedBy = generatedBy;
-        this.dateFrom = dateFrom;
-        this.dateTo = dateTo;
-    }
-
-    public static byte[] generateFinancialSummary(String title, RevenueReportResponse summaryData, User generatedBy, LocalDate dateFrom, LocalDate dateTo) throws IOException {
-        PdfReportGenerator generator = new PdfReportGenerator(title, summaryData, generatedBy, dateFrom, dateTo);
-        return generator.generateSummary();
-    }
-
-    private byte[] generateSummary() throws IOException {
-        try (PDDocument document = new PDDocument(); ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-            PDPage page = new PDPage(new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth()));
-            document.addPage(page);
-            
-            this.yPosition = page.getMediaBox().getHeight() - MARGIN;
-
-            try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
-                drawHeader(document, contentStream);
-                drawTitle(contentStream, page);
-                drawMetadata(contentStream);
-                drawSummaryData(contentStream);
-                drawFooter(contentStream, page, 1, 1);
-            }
-
-            document.save(outputStream);
-            return outputStream.toByteArray();
-        }
-    }
-
 
     public byte[] generate() throws IOException {
-        try (PDDocument document = new PDDocument(); ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-            PDPage page = new PDPage(new PDRectangle(PDRectangle.A4.getHeight(), PDRectangle.A4.getWidth()));
+        try (PDDocument document = new PDDocument()) {
+            PDPage page = new PDPage(PDRectangle.A4);
             document.addPage(page);
-            
-            this.yPosition = page.getMediaBox().getHeight() - MARGIN;
 
-            PDPageContentStream contentStream = new PDPageContentStream(document, page);
-            
-            drawHeader(document, contentStream);
-            drawTitle(contentStream, page);
-            drawMetadata(contentStream);
-            drawTable(contentStream);
-            drawFooter(contentStream, page, 1, 1);
+            try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
+                float margin = 50;
+                float yStart = page.getMediaBox().getHeight() - margin;
+                float tableWidth = page.getMediaBox().getWidth() - 2 * margin;
+                float yPosition = yStart;
 
-            contentStream.close();
-            document.save(outputStream);
-            return outputStream.toByteArray();
-        }
-    }
+                // Header
+                contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 16);
+                contentStream.beginText();
+                contentStream.newLineAtOffset(margin, yPosition);
+                contentStream.showText(title);
+                contentStream.endText();
+                yPosition -= 20;
 
-    private void drawHeader(PDDocument document, PDPageContentStream contentStream) throws IOException {
-        try (InputStream logoStream = getClass().getResourceAsStream("/static/images/logo.png")) {
-            if (logoStream != null) {
-                PDImageXObject logo = PDImageXObject.createFromByteArray(document, logoStream.readAllBytes(), "logo");
-                contentStream.drawImage(logo, MARGIN, yPosition - 35, 50, 50);
-            }
-        }
-        
-        yPosition -= 15;
-        writeText(contentStream, "PARAGREIN LOGISTICS", FONT_BOLD, 24, MARGIN + 60, yPosition);
-        yPosition -= 20;
-        writeText(contentStream, "Logistics Management System", FONT_REGULAR, 14, MARGIN + 60, yPosition);
-        yPosition -= 20;
-        drawHorizontalLine(contentStream, MARGIN, yPosition, 742);
-    }
+                // Sub-header
+                contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 8);
+                String generatedAt = "Generated at: "
+                        + LocalDateTime.now().format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM));
+                String generatedBy = "Generated by: " + this.generatedBy.getFullName();
+                contentStream.beginText();
+                contentStream.newLineAtOffset(margin, yPosition);
+                contentStream.showText(generatedAt + " | " + generatedBy);
+                contentStream.endText();
+                yPosition -= 15;
 
-    private void drawTitle(PDPageContentStream contentStream, PDPage page) throws IOException {
-        yPosition -= 30;
-        float titleWidth = FONT_BOLD.getStringWidth(title) / 1000 * 18;
-        float x = (page.getMediaBox().getWidth() - titleWidth) / 2;
-        writeText(contentStream, title, FONT_BOLD, 18, x, yPosition);
-        yPosition -= 20;
-        drawHorizontalLine(contentStream, MARGIN, yPosition, 742);
-    }
-
-    private void drawMetadata(PDPageContentStream contentStream) throws IOException {
-        yPosition -= 20;
-        writeText(contentStream, "Generated By   : " + generatedBy.getFullName(), FONT_REGULAR, 10, MARGIN, yPosition);
-        yPosition -= 15;
-        writeText(contentStream, "Generated On   : " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd MMMM yyyy, hh:mm a")), FONT_REGULAR, 10, MARGIN, yPosition);
-        yPosition -= 15;
-
-        String period = "All Records";
-        if (dateFrom != null && dateTo != null) {
-            period = dateFrom.format(DateTimeFormatter.ofPattern("dd MMM yyyy")) + " - " + dateTo.format(DateTimeFormatter.ofPattern("dd MMM yyyy"));
-        } else if (dateFrom != null) {
-            period = "From " + dateFrom.format(DateTimeFormatter.ofPattern("dd MMM yyyy"));
-        } else if (dateTo != null) {
-            period = "Until " + dateTo.format(DateTimeFormatter.ofPattern("dd MMM yyyy"));
-        }
-        
-        writeText(contentStream, "Report Period  : " + period, FONT_REGULAR, 10, MARGIN, yPosition);
-        if (rows != null) {
-            yPosition -= 15;
-            writeText(contentStream, "Total Records  : " + rows.size(), FONT_REGULAR, 10, MARGIN, yPosition);
-        }
-        yPosition -= 20;
-        drawHorizontalLine(contentStream, MARGIN, yPosition, 742);
-    }
-    
-    private void drawSummaryData(PDPageContentStream contentStream) throws IOException {
-        yPosition -= 20;
-
-        float keyX = MARGIN + 20;
-        float valueX = MARGIN + 220;
-
-        drawSummaryRow(contentStream, "Advance Received", summaryData.getTotalAdvanceReceived());
-        drawSummaryRow(contentStream, "Balance Collected", summaryData.getTotalBalanceCollected());
-        drawSummaryRow(contentStream, "Total Revenue", summaryData.getTotalRevenue());
-        drawSummaryRow(contentStream, "Outstanding Balance", summaryData.getOutstandingBalanceTotal());
-        drawSummaryRow(contentStream, "Verified Advances", BigDecimal.valueOf(summaryData.getVerifiedAdvanceCount()));
-        drawSummaryRow(contentStream, "Fully Settled Orders", BigDecimal.valueOf(summaryData.getFullySettledCount()));
-    }
-
-    private void drawSummaryRow(PDPageContentStream contentStream, String key, BigDecimal value) throws IOException {
-        writeText(contentStream, key, FONT_BOLD, 12, MARGIN + 20, yPosition);
-        writeText(contentStream, ":", FONT_REGULAR, 12, MARGIN + 200, yPosition);
-        writeText(contentStream, String.format("%,.2f", value), FONT_REGULAR, 12, MARGIN + 220, yPosition);
-        yPosition -= 25;
-    }
-
-
-    private void drawTable(PDPageContentStream contentStream) throws IOException {
-        yPosition -= 20;
-        
-        float tableWidth = 742;
-        int numberOfCols = headers.size();
-        float colWidth = tableWidth / numberOfCols;
-        float rowHeight = 20f;
-        
-        // Draw header
-        contentStream.setNonStrokingColor(Color.LIGHT_GRAY);
-        contentStream.addRect(MARGIN, yPosition, tableWidth, -rowHeight);
-        contentStream.fill();
-        
-        contentStream.setNonStrokingColor(Color.BLACK);
-        float textX = MARGIN + 5;
-        float textY = yPosition - 15;
-        
-        for (String header : headers) {
-            writeText(contentStream, header, FONT_BOLD, 10, textX, textY);
-            textX += colWidth;
-        }
-        
-        yPosition -= rowHeight;
-        
-        // Draw rows
-        boolean zebra = false;
-        for (List<String> row : rows) {
-            if (zebra) {
-                contentStream.setNonStrokingColor(Color.decode("#f0f0f0"));
-                contentStream.addRect(MARGIN, yPosition, tableWidth, -rowHeight);
-                contentStream.fill();
-                contentStream.setNonStrokingColor(Color.BLACK);
-            }
-            
-            textX = MARGIN + 5;
-            textY = yPosition - 15;
-            
-            for (int i = 0; i < row.size(); i++) {
-                String text = row.get(i);
-                float currentCellWidth = colWidth;
-
-                if (isNumeric(text)) {
-                    float textWidth = FONT_REGULAR.getStringWidth(text) / 1000 * 10;
-                    float centeredX = textX + (currentCellWidth - textWidth) / 2;
-                    writeText(contentStream, text, FONT_REGULAR, 10, centeredX, textY);
-                } else {
-                    writeText(contentStream, text, FONT_REGULAR, 10, textX, textY);
+                if (dateFrom != null && dateTo != null) {
+                    String dateRange = "Date Range: " + dateFrom.format(DateTimeFormatter.ISO_LOCAL_DATE) + " to "
+                            + dateTo.format(DateTimeFormatter.ISO_LOCAL_DATE);
+                    contentStream.beginText();
+                    contentStream.newLineAtOffset(margin, yPosition);
+                    contentStream.showText(dateRange);
+                    contentStream.endText();
+                    yPosition -= 20;
                 }
-                textX += colWidth;
+
+                // Table
+                drawTable(contentStream, margin, yPosition, tableWidth, headers, rows);
             }
-            
-            yPosition -= rowHeight;
-            zebra = !zebra;
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            document.save(baos);
+            return baos.toByteArray();
         }
     }
 
-    private void drawFooter(PDPageContentStream contentStream, PDPage page, int pageNum, int totalPages) throws IOException {
-        float footerY = MARGIN - 30;
-        writeText(contentStream, "Generated automatically by the Logistics Management System", FONT_REGULAR, 8, MARGIN, footerY);
-        
-        String pageNumText = "Page " + pageNum + " of " + totalPages;
-        float textWidth = FONT_REGULAR.getStringWidth(pageNumText) / 1000 * 8;
-        float x = page.getMediaBox().getWidth() - MARGIN - textWidth;
-        writeText(contentStream, pageNumText, FONT_REGULAR, 8, x, footerY);
+    private void drawTable(PDPageContentStream contentStream, float x, float y, float tableWidth, List<String> headers,
+            List<List<String>> rows) throws IOException {
+        int numCols = headers.size();
+        float rowHeight = 20f;
+        float[] colWidths = new float[numCols];
+        for (int i = 0; i < numCols; i++) {
+            colWidths[i] = tableWidth / numCols;
+        }
+
+        // Draw header
+        contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 10);
+        float nextX = x;
+        for (int i = 0; i < numCols; i++) {
+            contentStream.beginText();
+            contentStream.newLineAtOffset(nextX + 5, y - 15);
+            contentStream.showText(headers.get(i));
+            contentStream.endText();
+            nextX += colWidths[i];
+        }
+        drawTableRow(contentStream, x, y, tableWidth, rowHeight);
+        float nextY = y - rowHeight;
+
+        // Draw rows
+        contentStream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 9);
+        for (List<String> row : rows) {
+            nextX = x;
+            for (int i = 0; i < numCols; i++) {
+                contentStream.beginText();
+                contentStream.newLineAtOffset(nextX + 5, nextY - 15);
+                contentStream.showText(row.get(i) != null ? row.get(i) : "");
+                contentStream.endText();
+                nextX += colWidths[i];
+            }
+            drawTableRow(contentStream, x, nextY, tableWidth, rowHeight);
+            nextY -= rowHeight;
+        }
     }
 
-    private void writeText(PDPageContentStream contentStream, String text, PDType1Font font, float fontSize, float x, float y) throws IOException {
-        contentStream.beginText();
-        contentStream.setFont(font, fontSize);
-        contentStream.newLineAtOffset(x, y);
-        contentStream.showText(text);
-        contentStream.endText();
-    }
-    
-    private void drawHorizontalLine(PDPageContentStream contentStream, float xStart, float y, float width) throws IOException {
+    private void drawTableRow(PDPageContentStream contentStream, float x, float y, float width, float height)
+            throws IOException {
         contentStream.setLineWidth(0.5f);
-        contentStream.moveTo(xStart, y);
-        contentStream.lineTo(xStart + width, y);
+        contentStream.moveTo(x, y);
+        contentStream.lineTo(x + width, y);
         contentStream.stroke();
     }
 
-    private boolean isNumeric(String str) {
-        if (str == null) {
-            return false;
+    public static byte[] generateFinancialSummary(String title, RevenueReportResponse data, User user, LocalDate from,
+            LocalDate to) throws IOException {
+        try (PDDocument document = new PDDocument()) {
+            PDPage page = new PDPage(PDRectangle.A4);
+            document.addPage(page);
+            try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
+                float y = writeHeader(contentStream, title, user, from, to);
+                writeSummaryLine(contentStream, "Advance Received:", formatCurrency(data.getTotalAdvance()), y -= 30);
+                writeSummaryLine(contentStream, "Balance Collected:", formatCurrency(data.getTotalBalance()), y -= 30);
+                writeSummaryLine(contentStream, "Total Revenue:", formatCurrency(data.getTotalRevenue()), y -= 30);
+            }
+            return saveDocument(document);
         }
-        try {
-            Double.parseDouble(str);
-            return true;
-        } catch (NumberFormatException e) {
-            return false;
+    }
+
+    public static byte[] generateMonthlySummary(String title, MonthlyReportResponse data, User user, YearMonth month)
+            throws IOException {
+        try (PDDocument document = new PDDocument()) {
+            PDPage page = new PDPage(PDRectangle.A4);
+            document.addPage(page);
+            try (PDPageContentStream contentStream = new PDPageContentStream(document, page)) {
+                float y = writeHeader(contentStream,
+                        title + " for " + month.format(DateTimeFormatter.ofPattern("MMMM yyyy")), user, null, null);
+                y -= 20;
+                writeSummaryLine(contentStream, "Total Orders:", String.valueOf(data.getSummary().getTotalOrders()),
+                        y -= 30);
+                writeSummaryLine(contentStream, "Delivered:", String.valueOf(data.getSummary().getDeliveredOrders()),
+                        y -= 20);
+                writeSummaryLine(contentStream, "In Warehouse:", String.valueOf(data.getSummary().getWarehouseOrders()),
+                        y -= 20);
+                writeSummaryLine(contentStream, "Rejected/Cancelled:",
+                        String.valueOf(data.getSummary().getRejectedOrders()), y -= 20);
+                y -= 20;
+                writeSummaryLine(contentStream, "Orders Created This Month:", String.valueOf(data.getOrdersCreated()),
+                        y -= 30);
+                writeSummaryLine(contentStream, "Orders Delivered This Month:",
+                        String.valueOf(data.getOrdersDelivered()), y -= 20);
+                writeSummaryLine(contentStream, "Revenue Collected This Month:",
+                        formatCurrency(data.getRevenueCollected()), y -= 20);
+            }
+            return saveDocument(document);
         }
+    }
+
+    private static float writeHeader(PDPageContentStream stream, String title, User user, LocalDate from, LocalDate to)
+            throws IOException {
+        float margin = 50;
+        float y = PDRectangle.A4.getHeight() - margin;
+
+        stream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 16);
+        stream.beginText();
+        stream.newLineAtOffset(margin, y);
+        stream.showText(title);
+        stream.endText();
+        y -= 20;
+
+        stream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 8);
+        String generated = "Generated at: "
+                + LocalDateTime.now().format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)) + " by: "
+                + user.getFullName();
+        stream.beginText();
+        stream.newLineAtOffset(margin, y);
+        stream.showText(generated);
+        stream.endText();
+        y -= 15;
+
+        if (from != null && to != null) {
+            String range = "Date Range: " + from.format(DateTimeFormatter.ISO_LOCAL_DATE) + " to "
+                    + to.format(DateTimeFormatter.ISO_LOCAL_DATE);
+            stream.beginText();
+            stream.newLineAtOffset(margin, y);
+            stream.showText(range);
+            stream.endText();
+            y -= 20;
+        }
+        return y;
+    }
+
+    private static void writeSummaryLine(PDPageContentStream stream, String label, String value, float y)
+            throws IOException {
+        stream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 12);
+        stream.beginText();
+        stream.newLineAtOffset(60, y);
+        stream.showText(label);
+        stream.endText();
+
+        stream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 12);
+        stream.beginText();
+        stream.newLineAtOffset(250, y);
+        stream.showText(value);
+        stream.endText();
+    }
+
+    private static byte[] saveDocument(PDDocument document) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        document.save(baos);
+        return baos.toByteArray();
+    }
+
+    private static String formatCurrency(BigDecimal value) {
+        if (value == null)
+            return "Rs. 0.00";
+        NumberFormat currencyInstance = NumberFormat.getCurrencyInstance(new Locale("en", "LK"));
+        currencyInstance.setCurrency(java.util.Currency.getInstance("LKR"));
+        return currencyInstance.format(value);
     }
 }

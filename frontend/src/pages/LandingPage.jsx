@@ -122,7 +122,7 @@ if (user) {
 
               <div className="mt-10 flex flex-col gap-4 lg:flex-row lg:items-start">
                 <Link to={bookingPath} className="inline-flex min-h-14 items-center justify-center rounded-xl bg-[#22C55E] px-7 text-sm font-black text-[#06110A] shadow-[0_16px_40px_rgba(34,197,94,0.22)] transition hover:-translate-y-0.5 hover:bg-[#2DDB6B]">
-                  Book Shipment
+                  Create Order
                   <span className="ml-3 text-lg" aria-hidden="true">→</span>
                 </Link>
                 <form onSubmit={submitTracking} className="flex w-full max-w-xl flex-col gap-3 sm:flex-row">

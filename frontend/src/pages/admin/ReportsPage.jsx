@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   downloadAdminReportPdf,
-  getAdminReportSummary,
   getCompletedDeliveryReport,
   getDailyReport,
   getEmployeeWorkloadReport,
+  getFinancialSummaryReport,
   getMonthlyReport,
-  getRejectedOrderReport,
   getWarehouseReport,
 } from '../../api/adminReportApi.js';
 import DataTable from '../../components/DataTable.jsx';
@@ -24,7 +23,6 @@ const reportTypes = [
   { value: 'completed', label: 'Completed Deliveries' },
   { value: 'warehouse', label: 'Warehouse Report' },
   { value: 'workload', label: 'Employee Workload' },
-  { value: 'rejected', label: 'Rejected Orders' },
   { value: 'financial-summary', label: 'Financial Summary' },
 ];
 
@@ -41,9 +39,8 @@ const initialFilters = {
 function ReportsPage() {
   const [reportType, setReportType] = useState('completed');
   const [filters, setFilters] = useState(initialFilters);
-  const [summary, setSummary] = useState(null);
-  const [dailyMonthly, setDailyMonthly] = useState(null);
   const [rows, setRows] = useState([]);
+  const [reportData, setReportData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false); // Renaming for clarity
   const [error, setError] = useState('');
@@ -56,7 +53,6 @@ function ReportsPage() {
     const { name, value } = event.target;
     setFilters((current) => ({ ...current, [name]: value }));
   }
-
   async function loadReport() {
     try {
       setLoading(true);
@@ -64,27 +60,24 @@ function ReportsPage() {
       if (!validateFilters()) {
         return;
       }
-      setDailyMonthly(null);
-      const range = { dateFrom: filters.dateFrom, dateTo: filters.dateTo };
-      const summaryData = await getAdminReportSummary(range);
-      setSummary(summaryData);
+      setReportData(null);
+      setRows([]);
 
       if (reportType === 'daily') {
-        setDailyMonthly(await getDailyReport(filters.date));
-        setRows([]);
+        const dailyData = await getDailyReport(filters.date);
+        setReportData(dailyData);
       } else if (reportType === 'monthly') {
-        setDailyMonthly(await getMonthlyReport(filters.year, filters.month));
-        setRows([]);
+        const monthlyData = await getMonthlyReport(filters.year, filters.month);
+        setReportData(monthlyData);
       } else if (reportType === 'completed') {
-        setRows(await getCompletedDeliveryReport(range));
+        setRows(await getCompletedDeliveryReport({ dateFrom: filters.dateFrom, dateTo: filters.dateTo }));
       } else if (reportType === 'warehouse') {
-        setRows(await getWarehouseReport(range));
+        setRows(await getWarehouseReport({ dateFrom: filters.dateFrom, dateTo: filters.dateTo }));
       } else if (reportType === 'workload') {
         setRows(await getEmployeeWorkloadReport({ role: filters.role }));
-      } else if (reportType === 'rejected') {
-        setRows(await getRejectedOrderReport(range));
       } else if (reportType === 'financial-summary') {
-        setRows([]);
+        const financialData = await getFinancialSummaryReport({ dateFrom: filters.dateFrom, dateTo: filters.dateTo });
+        setReportData(financialData);
       }
     } catch (apiError) {
       setError(apiError.message);
@@ -93,13 +86,22 @@ function ReportsPage() {
     }
   }
 
-  async function exportPdf() { // Renamed from exportCsv
+  async function exportPdf() {
     try {
       setIsExporting(true);
       if (!validateFilters()) {
         return;
       }
-      const range = { dateFrom: filters.dateFrom, dateTo: filters.dateTo, role: filters.role };
+
+      const range = {
+        dateFrom: filters.dateFrom,
+        dateTo: filters.dateTo,
+        role: filters.role,
+        date: filters.date,
+        year: filters.year,
+        month: filters.month,
+      };
+
       const { blob, fileName } = await downloadAdminReportPdf(reportType, range); // Use new PDF function
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -146,17 +148,17 @@ function ReportsPage() {
         { key: 'currentAvailability', header: 'Availability', render: (row) => <StatusBadge variant={statusVariant(row.currentAvailability)}>{formatStatus(row.currentAvailability)}</StatusBadge> },
       ];
     }
-    return [
-      { key: 'trackingNumber', header: 'Tracking', render: (row) => <span className="font-bold text-[#F8FAFC]">{row.trackingNumber}</span> },
-      { key: 'customerName', header: 'Customer' },
-      { key: 'orderStatus', header: 'Order', render: (row) => <StatusBadge variant={statusVariant(row.orderStatus)}>{formatStatus(row.orderStatus)}</StatusBadge> },
-      { key: 'financialStatus', header: 'Finance', render: (row) => <StatusBadge variant={statusVariant(row.financialStatus)}>{formatStatus(row.financialStatus)}</StatusBadge> },
-      { key: 'rejectionReason', header: 'Reason', render: (row) => row.rejectionReason || '-' },
-      { key: 'createdAt', header: 'Created', render: (row) => formatDateTime(row.createdAt) },
-    ];
+    if (['daily', 'monthly', 'financial-summary'].includes(reportType)) {
+      return [
+        { key: 'metric', header: 'Metric', render: (row) => <span className="font-bold text-[#F8FAFC]">{row.metric}</span> },
+        { key: 'value', header: 'Value', render: (row) => (row.isCurrency ? formatMoney(row.value) : row.value) },
+      ];
+    }
+
+    return []; // Default empty for summary reports
   }, [reportType]);
 
-  const canExport = ['completed', 'workload', 'financial-summary'].includes(reportType);
+  const canExport = ['completed', 'workload', 'financial-summary', 'daily', 'monthly'].includes(reportType);
 
   function validateFilters() {
     if (filters.dateFrom && filters.dateTo && filters.dateFrom > filters.dateTo) {
@@ -197,7 +199,7 @@ function ReportsPage() {
             </select>
           </label>
 
-          {['completed', 'warehouse', 'rejected', 'financial-summary'].includes(reportType) && (
+          {['completed', 'warehouse', 'financial-summary'].includes(reportType) && (
             <>
               <label className="block">
                 <span className="pg-label">Date From</span>
@@ -255,27 +257,34 @@ function ReportsPage() {
             </SecondaryButton>
           </div>
         </div>
-        <p className="mt-3 text-xs text-[#94A3B8]">Daily summary uses the single date field. Monthly summary uses the current month by default. PDF export is available for completed delivery and workload reports.</p>
+        <p className="mt-3 text-xs text-[#94A3B8]">Daily summary uses the single date field. Monthly summary uses the current month by default. PDF export is available for all reports except Warehouse.</p>
       </section>
 
-      <section className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Total Orders" value={loading ? '...' : summary?.totalOrders || 0} />
-        <StatCard label="Delivered" value={loading ? '...' : summary?.deliveredOrders || 0} />
-        <StatCard label="Warehouse" value={loading ? '...' : summary?.warehouseOrders || 0} tone="blue" />
-        <StatCard label="Rejected/Cancelled" value={loading ? '...' : summary?.rejectedOrders || 0} tone="amber" />
-      </section>
-
-      {dailyMonthly && (
-        <section className="mt-6 grid gap-4 sm:grid-cols-3">
-          <StatCard label="Orders Created" value={dailyMonthly.ordersCreated} />
-          <StatCard label="Orders Delivered" value={dailyMonthly.ordersDelivered} />
-          <StatCard label="Revenue Collected" value={formatMoney(dailyMonthly.revenueCollected)} tone="blue" />
-        </section>
-      )}
-
-      {!['daily', 'monthly'].includes(reportType) && (
+      {['completed', 'warehouse', 'workload', 'daily', 'monthly', 'financial-summary'].includes(reportType) && (
         <section className="pg-panel mt-6 p-5">
-          <DataTable columns={columns} data={rows || []} loading={loading} emptyMessage="No report data found." />
+          <DataTable
+            columns={columns}
+            data={
+              (() => {
+                if ((reportType === 'daily' || reportType === 'monthly') && reportData?.summary) {
+                  return [
+                    { key: 'rejected', metric: 'Rejected/Cancelled', value: reportData.summary.rejectedOrders, isCurrency: false },
+                    { key: 'warehouse', metric: 'Orders at Warehouse', value: reportData.summary.warehouseOrders, isCurrency: false },
+                    { key: 'created', metric: 'Orders Created', value: reportData.ordersCreated, isCurrency: false },
+                    { key: 'delivered', metric: 'Orders Delivered', value: reportData.ordersDelivered, isCurrency: false },
+                    { key: 'revenue', metric: 'Revenue Collected', value: reportData.revenueCollected, isCurrency: true },
+                  ];
+                }
+                if (reportType === 'financial-summary' && reportData) {
+                  return [
+                    { key: 'advance', metric: 'Advance Received', value: reportData.totalAdvance, isCurrency: true },
+                    { key: 'balance', metric: 'Balance Collected', value: reportData.totalBalance, isCurrency: true },
+                    { key: 'total', metric: 'Total Revenue', value: reportData.totalRevenue, isCurrency: true },
+                  ];
+                }
+                return ['daily', 'monthly', 'financial-summary'].includes(reportType) ? [] : rows || [];
+              })()}
+            loading={loading} emptyMessage="No report data found." />
         </section>
       )}
     </DashboardLayout>

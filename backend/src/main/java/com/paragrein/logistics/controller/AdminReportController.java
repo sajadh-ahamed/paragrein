@@ -4,8 +4,7 @@ import com.paragrein.logistics.dto.CompletedDeliveryReportResponse;
 import com.paragrein.logistics.dto.DailyReportResponse;
 import com.paragrein.logistics.dto.EmployeeWorkloadReportResponse;
 import com.paragrein.logistics.dto.MonthlyReportResponse;
-import com.paragrein.logistics.dto.ReportSummaryResponse;
-import com.paragrein.logistics.dto.RejectedOrderReportResponse;
+import com.paragrein.logistics.dto.RevenueReportResponse;
 import com.paragrein.logistics.dto.WarehouseReportResponse;
 import com.paragrein.logistics.service.ReportService;
 import java.time.LocalDate;
@@ -28,15 +27,6 @@ public class AdminReportController {
 
     public AdminReportController(ReportService reportService) {
         this.reportService = reportService;
-    }
-
-    @GetMapping("/summary")
-    public ReportSummaryResponse getSummary(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
-            Authentication authentication
-    ) {
-        return reportService.getAdminSummary(dateFrom, dateTo, authentication);
     }
 
     @GetMapping("/daily")
@@ -81,15 +71,6 @@ public class AdminReportController {
             Authentication authentication
     ) {
         return reportService.getEmployeeWorkload(role, employeeId, authentication);
-    }
-
-    @GetMapping("/rejected-orders")
-    public List<RejectedOrderReportResponse> getRejectedOrders(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
-            Authentication authentication
-    ) {
-        return reportService.getRejectedOrders(dateFrom, dateTo, authentication);
     }
 
     @GetMapping("/completed-deliveries/export-csv")
@@ -145,6 +126,34 @@ public class AdminReportController {
     ) {
         return pdf("financial-summary.pdf", reportService.exportFinancialSummaryPdf(dateFrom, dateTo, authentication));
     }
+
+    @GetMapping("/daily/export-pdf")
+    public ResponseEntity<byte[]> exportDailySummaryPdf(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            Authentication authentication
+    ) {
+        return pdf("daily-summary.pdf", reportService.exportDailySummaryPdf(date, authentication));
+    }
+
+    @GetMapping("/monthly/export-pdf")
+    public ResponseEntity<byte[]> exportMonthlySummaryPdf(
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month,
+            Authentication authentication
+    ) {
+        return pdf("monthly-summary.pdf", reportService.exportMonthlySummaryPdf(year, month, authentication));
+    }
+
+    @GetMapping("/financial-summary")
+    public RevenueReportResponse getFinancialSummary(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateFrom,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dateTo,
+            Authentication authentication
+    ) {
+        return reportService.getRevenueReport(dateFrom, dateTo, authentication);
+    }
+
+
 
     private ResponseEntity<String> csv(String fileName, String content) {
         return ResponseEntity.ok()

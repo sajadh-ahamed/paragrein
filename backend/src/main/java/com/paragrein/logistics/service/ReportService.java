@@ -5,9 +5,7 @@ import com.paragrein.logistics.dto.DailyReportResponse;
 import com.paragrein.logistics.dto.EmployeeWorkloadReportResponse;
 import com.paragrein.logistics.dto.MonthlyReportResponse;
 import com.paragrein.logistics.dto.OutstandingBalanceReportResponse;
-import com.paragrein.logistics.dto.ReportRowResponse;
 import com.paragrein.logistics.dto.ReportSummaryResponse;
-import com.paragrein.logistics.dto.RejectedOrderReportResponse;
 import com.paragrein.logistics.dto.RevenueReportResponse;
 import com.paragrein.logistics.dto.WarehouseReportResponse;
 import com.paragrein.logistics.entity.Assignment;
@@ -33,22 +31,16 @@ import com.paragrein.logistics.repository.OrderRepository;
 import com.paragrein.logistics.repository.PaymentRepository;
 import com.paragrein.logistics.repository.WarehouseRecordRepository;
 import com.paragrein.logistics.security.SecurityUserUtil;
+import com.paragrein.logistics.util.CurrencyFormatter;
 import com.paragrein.logistics.util.PdfReportGenerator;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Optional;
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
-import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -64,6 +56,7 @@ public class ReportService {
     private final EmployeeProfileRepository employeeProfileRepository;
     private final AssignmentRepository assignmentRepository;
     private final AuditLogRepository auditLogRepository;
+    private final PdfGenerationService pdfGenerationService;
 
     public ReportService(
             OrderRepository orderRepository,
@@ -72,7 +65,8 @@ public class ReportService {
             WarehouseRecordRepository warehouseRecordRepository,
             EmployeeProfileRepository employeeProfileRepository,
             AssignmentRepository assignmentRepository,
-            AuditLogRepository auditLogRepository) {
+            AuditLogRepository auditLogRepository,
+            PdfGenerationService pdfGenerationService) {
         this.orderRepository = orderRepository;
         this.paymentRepository = paymentRepository;
         this.deliveryConfirmationRepository = deliveryConfirmationRepository;
@@ -80,15 +74,7 @@ public class ReportService {
         this.employeeProfileRepository = employeeProfileRepository;
         this.assignmentRepository = assignmentRepository;
         this.auditLogRepository = auditLogRepository;
-    }
-
-    @Transactional
-    public ReportSummaryResponse getAdminSummary(LocalDate dateFrom, LocalDate dateTo, Authentication authentication) {
-        User user = SecurityUserUtil.requireCurrentUser(authentication);
-        validateDateRange(dateFrom, dateTo);
-        List<Order> orders = filterOrdersByCreatedDate(orderRepository.findAll(), dateFrom, dateTo);
-        saveAudit(user, "REPORT_VIEWED", "Report", null, "Viewed admin summary report.");
-        return buildSummary(orders);
+        this.pdfGenerationService = pdfGenerationService;
     }
 
     @Transactional
@@ -149,15 +135,6 @@ public class ReportService {
     }
 
     @Transactional
-    public List<RejectedOrderReportResponse> getRejectedOrders(LocalDate dateFrom, LocalDate dateTo,
-            Authentication authentication) {
-        User user = SecurityUserUtil.requireCurrentUser(authentication);
-        validateDateRange(dateFrom, dateTo);
-        saveAudit(user, "REPORT_VIEWED", "Report", null, "Viewed rejected and cancelled orders report.");
-        return rejectedOrderRows(dateFrom, dateTo);
-    }
-
-    @Transactional
     public RevenueReportResponse getRevenueReport(LocalDate dateFrom, LocalDate dateTo, Authentication authentication) {
         User user = SecurityUserUtil.requireCurrentUser(authentication);
         validateDateRange(dateFrom, dateTo);
@@ -172,37 +149,6 @@ public class ReportService {
         validateDateRange(dateFrom, dateTo);
         saveAudit(user, "REPORT_VIEWED", "Report", null, "Viewed outstanding balance report.");
         return outstandingBalanceRows(dateFrom, dateTo);
-    }
-
-    @Transactional
-    public List<ReportRowResponse> getAdvancePayments(LocalDate dateFrom, LocalDate dateTo,
-            Authentication authentication) {
-        User user = SecurityUserUtil.requireCurrentUser(authentication);
-        validateDateRange(dateFrom, dateTo);
-        saveAudit(user, "REPORT_VIEWED", "Report", null, "Viewed advance payment report.");
-        return paymentRows(PaymentType.ADVANCE, dateFrom, dateTo);
-    }
-
-    @Transactional
-    public List<ReportRowResponse> getSettledOrders(LocalDate dateFrom, LocalDate dateTo,
-            Authentication authentication) {
-        User user = SecurityUserUtil.requireCurrentUser(authentication);
-        validateDateRange(dateFrom, dateTo);
-        saveAudit(user, "REPORT_VIEWED", "Report", null, "Viewed settled orders report.");
-        return deliveryConfirmationRepository.findAll().stream()
-                .filter(confirmation -> confirmation.getOrder().getFinancialStatus() == FinancialStatus.FULLY_SETTLED)
-                .filter(confirmation -> inDateRange(confirmation.getDeliveredAt(), dateFrom, dateTo))
-                .sorted(Comparator.comparing(DeliveryConfirmation::getDeliveredAt,
-                        Comparator.nullsLast(Comparator.naturalOrder())).reversed())
-                .map(confirmation -> new ReportRowResponse(
-                        confirmation.getOrder().getTrackingNumber(),
-                        confirmation.getOrder().getCustomer().getFullName(),
-                        "DELIVERED",
-                        confirmation.getOrder().getTotalAmount(),
-                        confirmation.getOrder().getFinancialStatus().name(),
-                        confirmation.getOrder().getCreatedAt(),
-                        confirmation.getDeliveredAt()))
-                .toList();
     }
 
     @Transactional
@@ -253,21 +199,6 @@ public class ReportService {
 
     @Transactional
     public String exportRevenueCsv(LocalDate dateFrom, LocalDate dateTo, Authentication authentication) {
-        User user = SecurityUserUtil.requireCurrentUser(authentication);
-        validateDateRange(dateFrom, dateTo);
-        saveAudit(user, "REPORT_EXPORTED", "Report", null, "Exported revenue CSV.");
-        RevenueReportResponse report = buildRevenueReport(dateFrom, dateTo);
-        return toCsv(
-                List.of("Tracking Number", "Customer", "Reference", "Amount", "Status", "Created At", "Completed At"),
-                report.getRows().stream()
-                        .map(row -> List.of(row.getTrackingNumber(), row.getCustomerName(), row.getReference(),
-                                text(row.getAmount()), row.getStatus(), text(row.getCreatedAt()),
-                                text(row.getCompletedAt())))
-                        .toList());
-    }
-
-    @Transactional
-    public String exportOutstandingBalancesCsv(LocalDate dateFrom, LocalDate dateTo, Authentication authentication) {
         User user = SecurityUserUtil.requireCurrentUser(authentication);
         validateDateRange(dateFrom, dateTo);
         saveAudit(user, "REPORT_EXPORTED", "Report", null, "Exported outstanding balance CSV.");
@@ -351,37 +282,13 @@ public class ReportService {
     }
 
     private RevenueReportResponse buildRevenueReport(LocalDate dateFrom, LocalDate dateTo) {
-        List<Payment> verifiedPayments = paymentRepository.findAll().stream()
-                .filter(payment -> payment.getPaymentStatus() == PaymentStatus.VERIFIED)
-                .filter(payment -> inDateRange(
-                        payment.getVerifiedAt() == null ? payment.getCreatedAt() : payment.getVerifiedAt(), dateFrom,
-                        dateTo))
-                .toList();
+        List<Payment> verifiedPayments = paymentRepository.findVerifiedPaymentsInDateRange(dateFrom, dateTo);
         BigDecimal totalAdvance = sumPayments(verifiedPayments, PaymentType.ADVANCE);
         BigDecimal totalBalance = sumPayments(verifiedPayments, PaymentType.BALANCE);
-        BigDecimal outstanding = outstandingBalanceRows(dateFrom, dateTo).stream()
-                .map(OutstandingBalanceReportResponse::getBalanceAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        long verifiedAdvanceCount = verifiedPayments.stream()
-                .filter(payment -> payment.getPaymentType() == PaymentType.ADVANCE).count();
-        long fullySettledCount = orderRepository.findAll().stream()
-                .filter(order -> order.getFinancialStatus() == FinancialStatus.FULLY_SETTLED)
-                .filter(order -> inDateRange(order.getUpdatedAt(), dateFrom, dateTo))
-                .count();
-        List<ReportRowResponse> rows = verifiedPayments.stream()
-                .sorted(Comparator.comparing((Payment payment) -> Optional.ofNullable(payment.getVerifiedAt())
-                        .orElse(payment.getCreatedAt())).reversed())
-                .map(payment -> new ReportRowResponse(
-                        payment.getOrder().getTrackingNumber(),
-                        payment.getOrder().getCustomer().getFullName(),
-                        payment.getPaymentReference(),
-                        payment.getAmount(),
-                        payment.getPaymentType() + " " + payment.getPaymentStatus(),
-                        payment.getCreatedAt(),
-                        payment.getVerifiedAt()))
-                .toList();
-        return new RevenueReportResponse(totalAdvance, totalBalance, totalAdvance.add(totalBalance), outstanding,
-                verifiedAdvanceCount, fullySettledCount, rows);
+        return new RevenueReportResponse(
+                totalAdvance,
+                totalBalance,
+                totalAdvance.add(totalBalance));
     }
 
     private List<CompletedDeliveryReportResponse> completedDeliveryRows(LocalDate dateFrom, LocalDate dateTo) {
@@ -425,22 +332,6 @@ public class ReportService {
                 .toList();
     }
 
-    private List<RejectedOrderReportResponse> rejectedOrderRows(LocalDate dateFrom, LocalDate dateTo) {
-        List<Payment> rejectedPayments = paymentRepository.findAll().stream()
-                .filter(payment -> payment.getPaymentStatus() == PaymentStatus.REJECTED)
-                .toList();
-        return filterOrdersByCreatedDate(orderRepository.findAll(), dateFrom, dateTo).stream()
-                .filter(order -> order.getOrderStatus() == OrderStatus.REJECTED
-                        || order.getOrderStatus() == OrderStatus.CANCELLED
-                        || order.getFinancialStatus() == FinancialStatus.ADVANCE_REJECTED)
-                .sorted(Comparator.comparing(Order::getCreatedAt).reversed())
-                .map(order -> new RejectedOrderReportResponse(
-                        order,
-                        rejectedPayments.stream().filter(payment -> payment.getOrder().getId().equals(order.getId()))
-                                .findFirst().orElse(null)))
-                .toList();
-    }
-
     private List<OutstandingBalanceReportResponse> outstandingBalanceRows(LocalDate dateFrom, LocalDate dateTo) {
         return filterOrdersByCreatedDate(orderRepository.findAll(), dateFrom, dateTo).stream()
                 .filter(order -> order.getFinancialStatus() == FinancialStatus.ADVANCE_VERIFIED
@@ -448,22 +339,6 @@ public class ReportService {
                 .filter(order -> order.getBalanceAmount().compareTo(BigDecimal.ZERO) > 0)
                 .sorted(Comparator.comparing(Order::getUpdatedAt).reversed())
                 .map(OutstandingBalanceReportResponse::new)
-                .toList();
-    }
-
-    private List<ReportRowResponse> paymentRows(PaymentType type, LocalDate dateFrom, LocalDate dateTo) {
-        return paymentRepository.findAll().stream()
-                .filter(payment -> payment.getPaymentType() == type)
-                .filter(payment -> inDateRange(payment.getCreatedAt(), dateFrom, dateTo))
-                .sorted(Comparator.comparing(Payment::getCreatedAt).reversed())
-                .map(payment -> new ReportRowResponse(
-                        payment.getOrder().getTrackingNumber(),
-                        payment.getOrder().getCustomer().getFullName(),
-                        payment.getPaymentReference(),
-                        payment.getAmount(),
-                        payment.getPaymentStatus().name(),
-                        payment.getCreatedAt(),
-                        payment.getVerifiedAt()))
                 .toList();
     }
 
@@ -565,11 +440,61 @@ public class ReportService {
 
         RevenueReportResponse reportData = buildRevenueReport(dateFrom, dateTo);
 
-        try {
-            return PdfReportGenerator.generateFinancialSummary("Financial Summary Report", reportData, user, dateFrom,
-                    dateTo);
-        } catch (IOException e) {
-            throw new AppException("Failed to generate PDF report.", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+        var filters = new LinkedHashMap<String, String>();
+        filters.put("Generated By", user.getFullName());
+        filters.put("Generated On", text(LocalDateTime.now()));
+        filters.put("Report Period", (dateFrom != null && dateTo != null) ? dateFrom + " to " + dateTo : "All Records");
+
+        var data = new LinkedHashMap<String, String>();
+        data.put("Advance Received", CurrencyFormatter.format(reportData.getTotalAdvance()));
+        data.put("Balance Collected", CurrencyFormatter.format(reportData.getTotalBalance()));
+        data.put("Total Revenue", CurrencyFormatter.format(reportData.getTotalRevenue()));
+        return pdfGenerationService.generateSummaryReportPdf("Financial Summary Report", filters, data);
+    }
+
+    @Transactional
+    public byte[] exportDailySummaryPdf(LocalDate date, Authentication authentication) {
+        User user = SecurityUserUtil.requireCurrentUser(authentication);
+        LocalDate reportDate = date == null ? LocalDate.now() : date;
+        saveAudit(user, "REPORT_EXPORTED", "Report", null, "Exported daily summary PDF for " + reportDate + ".");
+
+        DailyReportResponse reportData = getDailyReport(reportDate, authentication);
+
+        var filters = new LinkedHashMap<String, String>();
+        filters.put("Generated By", user.getFullName());
+        filters.put("Generated On", text(LocalDateTime.now()));
+        filters.put("Report Date", reportDate.toString());
+
+        var data = new LinkedHashMap<String, String>();
+        data.put("Rejected/Cancelled", text(reportData.getSummary().getRejectedOrders()));
+        data.put("Orders at Warehouse", text(reportData.getSummary().getWarehouseOrders()));
+        data.put("Orders Created", text(reportData.getOrdersCreated()));
+        data.put("Orders Delivered", text(reportData.getOrdersDelivered()));
+        data.put("Revenue Collected", CurrencyFormatter.format(reportData.getRevenueCollected()));
+
+        return pdfGenerationService.generateSummaryReportPdf("Daily Summary Report", filters, data);
+    }
+
+    @Transactional
+    public byte[] exportMonthlySummaryPdf(Integer year, Integer month, Authentication authentication) {
+        User user = SecurityUserUtil.requireCurrentUser(authentication);
+        YearMonth reportMonth = year == null || month == null ? YearMonth.now() : YearMonth.of(year, month);
+        saveAudit(user, "REPORT_EXPORTED", "Report", null, "Exported monthly summary PDF for " + reportMonth + ".");
+
+        MonthlyReportResponse reportData = getMonthlyReport(year, month, authentication);
+
+        var filters = new LinkedHashMap<String, String>();
+        filters.put("Generated By", user.getFullName());
+        filters.put("Generated On", text(LocalDateTime.now()));
+        filters.put("Report Month", reportMonth.toString());
+
+        var data = new LinkedHashMap<String, String>();
+        data.put("Orders Created", text(reportData.getOrdersCreated()));
+        data.put("Orders Delivered", text(reportData.getOrdersDelivered()));
+        data.put("Revenue Collected", CurrencyFormatter.format(reportData.getRevenueCollected()));
+        data.put("Total Orders in Month", text(reportData.getSummary().getTotalOrders()));
+        data.put("Delivered in Month", text(reportData.getSummary().getDeliveredOrders()));
+
+        return pdfGenerationService.generateSummaryReportPdf("Monthly Summary Report", filters, data);
     }
 }
