@@ -155,21 +155,41 @@ function AssignedPickupsPage() {
   ];
 
   //above chnage this part only 
-//   {action && (
-// <>
-//     <PrimaryButton
-//         onClick={() => openAction(task)}>
-//         {action.label}
-//     </PrimaryButton>
+/*render: (task) => {
+    const action = nextAction(task);
 
-//     {task.assignmentStatus === 'ASSIGNED' && (
-//         <SecondaryButton
-//             onClick={() => openRejectModal(task)}>
-//             Reject
-//         </SecondaryButton>
-//     )}
-// </>
-// )}
+    return (
+        <div className="flex flex-wrap gap-2">
+
+            <Link to={`/pickup/tasks/${task.assignmentId}`}>
+                <SecondaryButton className="px-3 py-1.5 text-xs">
+                    View Details
+                </SecondaryButton>
+            </Link>
+
+            {action && (
+                <>
+                    <PrimaryButton
+                        onClick={() => openAction(task)}
+                        className="px-3 py-1.5 text-xs"
+                    >
+                        {action.label}
+                    </PrimaryButton>
+
+                    {task.assignmentStatus === "ASSIGNED" && (
+                        <SecondaryButton
+                            onClick={() => openRejectModal(task)}
+                            className="px-3 py-1.5 text-xs"
+                        >
+                            Reject
+                        </SecondaryButton>
+                    )}
+                </>
+            )}
+
+        </div>
+    );
+}*/
 
   const action = selectedTask ? nextAction(selectedTask) : null;
 

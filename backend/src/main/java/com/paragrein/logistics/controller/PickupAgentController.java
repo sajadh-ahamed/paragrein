@@ -51,7 +51,7 @@ public class PickupAgentController {
     }
 
     //reject pickup task
-//    @PostMapping("/{assignmentId}/reject")
+//    @PostMapping("/tasks/{assignmentId}/reject")
 //    public ResponseEntity<PickupTaskDetailResponse> rejectPickupTask(
 //            @PathVariable Long assignmentId,
 //            @RequestBody PickupActionRequest request,
