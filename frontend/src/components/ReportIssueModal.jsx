@@ -89,6 +89,17 @@ function ReportIssueModal({ open, onClose, onCreated }) {
             placeholder="Describe what happened and where it happened."
           />
         </label>
+        
+                {/* <label className="block">
+          <span className="pg-label">Explain</span>
+          <textarea
+            name="description"
+            value={form.description}
+            onChange={updateField}
+            className="pg-field mt-2 min-h-32"
+            placeholder="Describe what happened and where it happened."
+          />
+        </label> */}
 
         <div className="flex flex-wrap justify-end gap-3">
           <SecondaryButton onClick={closeModal}>Cancel</SecondaryButton>

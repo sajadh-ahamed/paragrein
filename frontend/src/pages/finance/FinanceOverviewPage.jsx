@@ -50,6 +50,7 @@ function FinanceOverviewPage() {
         <StatCard label="Verified Advances" value={value('verifiedAdvanceCount')} hint="Ready for admin assignment" />
         <StatCard label="Rejected Payments" value={value('rejectedAdvanceCount')} hint="Rejected advance submissions" tone="amber" />
         <StatCard label="Verified Advance Amount" value={loading ? '...' : formatMoney(summary?.totalVerifiedAdvanceAmount)} hint="Total verified advance amount" />
+        <StatCard label="Total Revenue" value={loading ? '...' : formatMoney(summary?.totalRevenue)} hint="Total payments received" tone="green" />
         <StatCard label="Outstanding Balances" value={loading ? '...' : formatMoney(summary?.totalOutstandingBalanceAmount)} hint="Balance due after verified advances" tone="blue" />
         <StatCard label="Ready for Admin Assignment" value={value('totalOrdersReadyForAdminAssignment')} hint="Verified orders awaiting assignment" />
       </section>

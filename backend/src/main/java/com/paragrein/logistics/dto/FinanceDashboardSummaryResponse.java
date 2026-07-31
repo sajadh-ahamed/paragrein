@@ -11,6 +11,7 @@ public class FinanceDashboardSummaryResponse {
     private BigDecimal totalOutstandingBalanceAmount;
     private long totalOrdersAwaitingFinance;
     private long totalOrdersReadyForAdminAssignment;
+    private BigDecimal totalRevenue;
 
     public FinanceDashboardSummaryResponse(
             long pendingAdvanceCount,
@@ -19,7 +20,8 @@ public class FinanceDashboardSummaryResponse {
             BigDecimal totalVerifiedAdvanceAmount,
             BigDecimal totalOutstandingBalanceAmount,
             long totalOrdersAwaitingFinance,
-            long totalOrdersReadyForAdminAssignment
+            long totalOrdersReadyForAdminAssignment,
+            BigDecimal totalRevenue
     ) {
         this.pendingAdvanceCount = pendingAdvanceCount;
         this.verifiedAdvanceCount = verifiedAdvanceCount;
@@ -28,6 +30,7 @@ public class FinanceDashboardSummaryResponse {
         this.totalOutstandingBalanceAmount = totalOutstandingBalanceAmount;
         this.totalOrdersAwaitingFinance = totalOrdersAwaitingFinance;
         this.totalOrdersReadyForAdminAssignment = totalOrdersReadyForAdminAssignment;
+        this.totalRevenue = totalRevenue;
     }
 
     public long getPendingAdvanceCount() {
@@ -56,5 +59,9 @@ public class FinanceDashboardSummaryResponse {
 
     public long getTotalOrdersReadyForAdminAssignment() {
         return totalOrdersReadyForAdminAssignment;
+    }
+
+    public BigDecimal getTotalRevenue() {
+        return totalRevenue;
     }
 }

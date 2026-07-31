@@ -76,7 +76,9 @@ function ReportsPage() {
       } else if (reportType === 'workload') {
         setRows(await getEmployeeWorkloadReport({ role: filters.role }));
       } else if (reportType === 'financial-summary') {
-        const financialData = await getFinancialSummaryReport({ dateFrom: filters.dateFrom, dateTo: filters.dateTo });
+        const financialData = await getFinancialSummaryReport({
+          dateFrom: filters.dateFrom || null, dateTo: filters.dateTo || null,
+        });
         setReportData(financialData);
       }
     } catch (apiError) {
@@ -277,9 +279,10 @@ function ReportsPage() {
                 }
                 if (reportType === 'financial-summary' && reportData) {
                   return [
-                    { key: 'advance', metric: 'Advance Received', value: reportData.totalAdvance, isCurrency: true },
-                    { key: 'balance', metric: 'Balance Collected', value: reportData.totalBalance, isCurrency: true },
                     { key: 'total', metric: 'Total Revenue', value: reportData.totalRevenue, isCurrency: true },
+                    { key: 'advance', metric: 'Total Advance Received', value: reportData.totalAdvance, isCurrency: true },
+                    { key: 'balance', metric: 'Total Balance Collected', value: reportData.totalBalance, isCurrency: true },           
+                    { key: 'balanceToCollect', metric: 'Total Balance to Collect', value: reportData.totalBalanceToCollect, isCurrency: true },
                   ];
                 }
                 return ['daily', 'monthly', 'financial-summary'].includes(reportType) ? [] : rows || [];

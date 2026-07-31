@@ -8,11 +8,14 @@ public class RevenueReportResponse {
     private final BigDecimal totalAdvance;
     private final BigDecimal totalBalance;
     private final BigDecimal totalRevenue;
+    private final BigDecimal totalBalanceToCollect;
 
-    public RevenueReportResponse(BigDecimal totalAdvance, BigDecimal totalBalance, BigDecimal totalRevenue) {
+    public RevenueReportResponse(BigDecimal totalAdvance, BigDecimal totalBalance, BigDecimal totalRevenue,
+            BigDecimal totalBalanceToCollect) {
         this.totalAdvance = totalAdvance;
         this.totalBalance = totalBalance;
         this.totalRevenue = totalRevenue;
+        this.totalBalanceToCollect = totalBalanceToCollect;
     }
 
     public BigDecimal getTotalAdvance() {
@@ -25,5 +28,9 @@ public class RevenueReportResponse {
 
     public BigDecimal getTotalRevenue() {
         return totalRevenue;
+    }
+
+    public BigDecimal getTotalBalanceToCollect() {
+        return totalBalanceToCollect;
     }
 }

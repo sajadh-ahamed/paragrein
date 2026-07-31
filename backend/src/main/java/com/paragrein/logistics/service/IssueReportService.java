@@ -50,6 +50,8 @@ public class IssueReportService {
         issue.setSeverity(request.getSeverity());
         issue.setIssueStatus(IssueStatus.OPEN);
         IssueReport saved = issueReportRepository.save(issue);
+        // Save additional issue explanation
+// issue.setExplain(clean(request.getExplain()));
 
         saveAudit(reporter, "ISSUE_REPORTED", "IssueReport", saved.getId(), "Created issue report: " + saved.getTitle());
         return new IssueReportResponse(saved);
@@ -151,6 +153,10 @@ public class IssueReportService {
         if (request.getSeverity() == null) {
             throw new AppException("Issue severity is required.", HttpStatus.BAD_REQUEST);
         }
+        // Validate additional issue explanation
+// if (isBlank(request.getExplain())) {
+//     throw new AppException("Issue explanation is required.", HttpStatus.BAD_REQUEST);
+// }
     }
 
     private void saveAudit(User user, String action, String entityType, Long entityId, String description) {

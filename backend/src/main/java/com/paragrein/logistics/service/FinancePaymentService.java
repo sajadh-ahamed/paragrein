@@ -50,8 +50,7 @@ public class FinancePaymentService {
             OrderStatusHistoryRepository orderStatusHistoryRepository,
             AuditLogRepository auditLogRepository,
             NotificationRepository notificationRepository,
-            UserRepository userRepository
-    ) {
+            UserRepository userRepository) {
         this.paymentRepository = paymentRepository;
         this.orderRepository = orderRepository;
         this.orderStatusHistoryRepository = orderStatusHistoryRepository;
@@ -67,8 +66,7 @@ public class FinancePaymentService {
         List<Payment> rejectedAdvance = findAdvancePayments(PaymentStatus.REJECTED);
         List<Order> outstandingOrders = orderRepository.findByFinancialStatusInOrderByUpdatedAtDesc(List.of(
                 FinancialStatus.ADVANCE_VERIFIED,
-                FinancialStatus.BALANCE_DUE
-        ));
+                FinancialStatus.BALANCE_DUE));
 
         BigDecimal totalVerifiedAdvanceAmount = verifiedAdvance.stream()
                 .map(Payment::getAmount)
@@ -77,15 +75,18 @@ public class FinancePaymentService {
                 .map(Order::getBalanceAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        BigDecimal totalRevenue = paymentRepository.sumTotalByPaymentStatus(PaymentStatus.VERIFIED);
+
         return new FinanceDashboardSummaryResponse(
                 pendingAdvance.size(),
                 verifiedAdvance.size(),
                 rejectedAdvance.size(),
                 totalVerifiedAdvanceAmount,
                 totalOutstandingBalanceAmount,
-                orderRepository.countByFinancialStatus(FinancialStatus.ADVANCE_SUBMITTED),
-                orderRepository.countByFinancialStatusAndOrderStatus(FinancialStatus.ADVANCE_VERIFIED, OrderStatus.PENDING_ADVANCE_VERIFICATION)
-        );
+                (long) orderRepository.countByFinancialStatus(FinancialStatus.ADVANCE_SUBMITTED),
+                orderRepository.countByFinancialStatusAndOrderStatus(FinancialStatus.ADVANCE_VERIFIED,
+                        OrderStatus.PENDING_ADVANCE_VERIFICATION),
+                totalRevenue);
     }
 
     @Transactional(readOnly = true)
@@ -116,15 +117,15 @@ public class FinancePaymentService {
     @Transactional(readOnly = true)
     public List<FinancePaymentSummaryResponse> getOutstandingBalances() {
         return orderRepository.findByFinancialStatusInOrderByUpdatedAtDesc(List.of(
-                        FinancialStatus.ADVANCE_VERIFIED,
-                        FinancialStatus.BALANCE_DUE
-                )).stream()
+                FinancialStatus.ADVANCE_VERIFIED,
+                FinancialStatus.BALANCE_DUE)).stream()
                 .map(order -> new FinancePaymentSummaryResponse(order, latestPaymentForOrder(order)))
                 .toList();
     }
 
     @Transactional
-    public FinancePaymentDetailResponse verifyAdvancePayment(Long paymentId, VerifyAdvancePaymentRequest request, Authentication authentication) {
+    public FinancePaymentDetailResponse verifyAdvancePayment(Long paymentId, VerifyAdvancePaymentRequest request,
+            Authentication authentication) {
         User financeOfficer = SecurityUserUtil.requireCurrentUser(authentication);
         Payment payment = findPayment(paymentId);
         validateAdvancePaymentCanBeProcessed(payment);
@@ -138,23 +139,27 @@ public class FinancePaymentService {
         order.setFinancialStatus(FinancialStatus.ADVANCE_VERIFIED);
         Order savedOrder = orderRepository.save(order);
 
-        // Business rule: finance approval prepares the order for admin pickup assignment without assigning operations staff.
+        // Business rule: finance approval prepares the order for admin pickup
+        // assignment without assigning operations staff.
         saveStatusHistory(
                 savedOrder,
                 savedOrder.getOrderStatus(),
                 savedOrder.getOrderStatus(),
                 financeOfficer,
-                "Advance payment verified by finance officer. Order is ready for admin pickup assignment."
-        );
-        saveAudit(financeOfficer, "ADVANCE_PAYMENT_VERIFIED", "Payment", savedPayment.getId(), "Verified advance payment for " + savedOrder.getTrackingNumber());
-        createNotification(savedOrder.getCustomer(), "Advance payment verified", "Order " + savedOrder.getTrackingNumber() + " is ready for admin pickup assignment.", NotificationType.PAYMENT);
+                "Advance payment verified by finance officer. Order is ready for admin pickup assignment.");
+        saveAudit(financeOfficer, "ADVANCE_PAYMENT_VERIFIED", "Payment", savedPayment.getId(),
+                "Verified advance payment for " + savedOrder.getTrackingNumber());
+        createNotification(savedOrder.getCustomer(), "Advance payment verified",
+                "Order " + savedOrder.getTrackingNumber() + " is ready for admin pickup assignment.",
+                NotificationType.PAYMENT);
         notifyAdmins(savedOrder.getTrackingNumber());
 
         return new FinancePaymentDetailResponse(savedPayment);
     }
 
     @Transactional
-    public FinancePaymentDetailResponse rejectAdvancePayment(Long paymentId, RejectAdvancePaymentRequest request, Authentication authentication) {
+    public FinancePaymentDetailResponse rejectAdvancePayment(Long paymentId, RejectAdvancePaymentRequest request,
+            Authentication authentication) {
         User financeOfficer = SecurityUserUtil.requireCurrentUser(authentication);
         if (request == null || isBlank(request.getRejectionReason())) {
             throw new AppException("Rejection reason is required.", HttpStatus.BAD_REQUEST);
@@ -175,9 +180,13 @@ public class FinancePaymentService {
         order.setOrderStatus(OrderStatus.REJECTED);
         Order savedOrder = orderRepository.save(order);
 
-        saveStatusHistory(savedOrder, previousStatus, OrderStatus.REJECTED, financeOfficer, "Advance payment rejected: " + clean(request.getRejectionReason()));
-        saveAudit(financeOfficer, "ADVANCE_PAYMENT_REJECTED", "Payment", savedPayment.getId(), "Rejected advance payment for " + savedOrder.getTrackingNumber());
-        createNotification(savedOrder.getCustomer(), "Advance payment rejected", "Order " + savedOrder.getTrackingNumber() + " was rejected. Reason: " + clean(request.getRejectionReason()), NotificationType.PAYMENT);
+        saveStatusHistory(savedOrder, previousStatus, OrderStatus.REJECTED, financeOfficer,
+                "Advance payment rejected: " + clean(request.getRejectionReason()));
+        saveAudit(financeOfficer, "ADVANCE_PAYMENT_REJECTED", "Payment", savedPayment.getId(),
+                "Rejected advance payment for " + savedOrder.getTrackingNumber());
+        createNotification(savedOrder.getCustomer(), "Advance payment rejected", "Order "
+                + savedOrder.getTrackingNumber() + " was rejected. Reason: " + clean(request.getRejectionReason()),
+                NotificationType.PAYMENT);
 
         return new FinancePaymentDetailResponse(savedPayment);
     }
@@ -221,7 +230,8 @@ public class FinancePaymentService {
                 .toList();
     }
 
-    private void saveStatusHistory(Order order, OrderStatus previousStatus, OrderStatus newStatus, User changedBy, String note) {
+    private void saveStatusHistory(Order order, OrderStatus previousStatus, OrderStatus newStatus, User changedBy,
+            String note) {
         OrderStatusHistory history = new OrderStatusHistory();
         history.setOrder(order);
         history.setPreviousStatus(previousStatus);
@@ -255,10 +265,9 @@ public class FinancePaymentService {
         userRepository.findByRole_Code(RoleCode.ADMIN)
                 .forEach(admin -> createNotification(
                         admin,
-                        "Order ready for assignment",
-                        "Order " + trackingNumber + " has verified advance payment and is ready for admin assignment.",
-                        NotificationType.ORDER_STATUS
-                ));
+                        "Action Required: Assign Pickup",
+                        "Order " + trackingNumber + " has a verified payment. Please assign a pickup agent.",
+                        NotificationType.ORDER_STATUS));
     }
 
     private boolean isBlank(String value) {

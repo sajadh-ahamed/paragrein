@@ -47,4 +47,8 @@ public class IssueReport extends CreatedAtEntity {
 
     @Column(name = "resolved_at")
     private LocalDateTime resolvedAt;
+
+    // Store additional explanation provided by the user
+// @Column(name = "explain", length = 2000)
+// private String explain;
 }

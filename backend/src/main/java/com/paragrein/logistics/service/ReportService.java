@@ -282,13 +282,22 @@ public class ReportService {
     }
 
     private RevenueReportResponse buildRevenueReport(LocalDate dateFrom, LocalDate dateTo) {
-        List<Payment> verifiedPayments = paymentRepository.findVerifiedPaymentsInDateRange(dateFrom, dateTo);
+        List<Payment> verifiedPayments;
+        if (dateFrom != null && dateTo != null) {
+            verifiedPayments = paymentRepository.findVerifiedPaymentsInDateRange(dateFrom, dateTo);
+        } else {
+            verifiedPayments = paymentRepository.findByPaymentStatus(PaymentStatus.VERIFIED);
+        }
         BigDecimal totalAdvance = sumPayments(verifiedPayments, PaymentType.ADVANCE);
         BigDecimal totalBalance = sumPayments(verifiedPayments, PaymentType.BALANCE);
+        BigDecimal totalBalanceToCollect = outstandingBalanceRows(dateFrom, dateTo).stream()
+                .map(OutstandingBalanceReportResponse::getBalanceAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
         return new RevenueReportResponse(
                 totalAdvance,
                 totalBalance,
-                totalAdvance.add(totalBalance));
+                totalAdvance.add(totalBalance),
+                totalBalanceToCollect);
     }
 
     private List<CompletedDeliveryReportResponse> completedDeliveryRows(LocalDate dateFrom, LocalDate dateTo) {
@@ -356,13 +365,7 @@ public class ReportService {
     }
 
     private BigDecimal sumVerifiedPayments(LocalDate dateFrom, LocalDate dateTo) {
-        return paymentRepository.findAll().stream()
-                .filter(payment -> payment.getPaymentStatus() == PaymentStatus.VERIFIED)
-                .filter(payment -> inDateRange(
-                        payment.getVerifiedAt() == null ? payment.getCreatedAt() : payment.getVerifiedAt(), dateFrom,
-                        dateTo))
-                .map(Payment::getAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return paymentRepository.sumVerifiedPaymentsInDateRange(dateFrom, dateTo);
     }
 
     private BigDecimal sumPayments(List<Payment> payments, PaymentType type) {
@@ -449,6 +452,7 @@ public class ReportService {
         data.put("Advance Received", CurrencyFormatter.format(reportData.getTotalAdvance()));
         data.put("Balance Collected", CurrencyFormatter.format(reportData.getTotalBalance()));
         data.put("Total Revenue", CurrencyFormatter.format(reportData.getTotalRevenue()));
+        data.put("Total Balance to Collect", CurrencyFormatter.format(reportData.getTotalBalanceToCollect()));
         return pdfGenerationService.generateSummaryReportPdf("Financial Summary Report", filters, data);
     }
 

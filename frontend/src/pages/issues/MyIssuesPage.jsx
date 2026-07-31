@@ -36,6 +36,12 @@ function MyIssuesPage() {
     { key: 'issueStatus', header: 'Status', render: (row) => <StatusBadge variant={statusVariant(row.issueStatus)}>{formatStatus(row.issueStatus)}</StatusBadge> },
     { key: 'adminResponse', header: 'Admin Response', render: (row) => row.adminResponse || <span className="text-[#64748B]">Pending</span> },
     { key: 'createdAt', header: 'Created', render: (row) => formatDateTime(row.createdAt) },
+// Add Explain column to display additional issue details
+// {
+//   key: 'explain',
+//   header: 'Explain',
+//   render: (row) => row.explain,
+// },
   ];
 
   return (

@@ -187,6 +187,11 @@ CREATE TABLE IF NOT EXISTS issue_reports (
     reported_by_user_id BIGINT NOT NULL,
     title VARCHAR(150) NOT NULL,
     description VARCHAR(1000) NOT NULL,
+    
+    -- VIVA MODIFICATION: Added a new column to categorize the issue.
+    -- This helps in routing the issue to the correct team (e.g., developers for bugs, designers for UI).
+    issue_category VARCHAR(50) NOT NULL,
+
     severity VARCHAR(20) NOT NULL,
     issue_status VARCHAR(30) NOT NULL,
     admin_response VARCHAR(1000),
