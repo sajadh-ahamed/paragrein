@@ -7,6 +7,8 @@ public class ServiceSettingsRequest {
     private BigDecimal baseRate;
     private BigDecimal perKmRate;
     private BigDecimal advancePercentage;
+//    private BigDecimal perKgRate;
+
 
     public BigDecimal getBaseRate() {
         return baseRate;
@@ -31,4 +33,14 @@ public class ServiceSettingsRequest {
     public void setAdvancePercentage(BigDecimal advancePercentage) {
         this.advancePercentage = advancePercentage;
     }
+
+    //    public BigDecimal getPerKgRate() {
+//        return perKgRate;
+//    }
+//
+//    public void setPerKgRate(BigDecimal perKgRate) {
+//        this.perKgRate = perKgRate;
+//    }
+
+
 }

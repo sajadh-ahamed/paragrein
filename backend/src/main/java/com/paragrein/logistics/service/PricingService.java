@@ -32,8 +32,16 @@ public class PricingService {
         // Extension point: this calculation can later be replaced by a route service
         // without changing order storage fields.
         BigDecimal routeDistanceKm = moneyScale(request.getRouteDistanceKm());
+        //exact formula which is calculated by this (base rate + (distance x perkm price))
         BigDecimal totalAmount = moneyScale(
                 settings.getBaseRate().add(routeDistanceKm.multiply(settings.getPerKmRate())));
+//        completely change total amount
+//        BigDecimal totalAmount = moneyScale(
+//                settings.getBaseRate()
+//                        .add(routeDistanceKm.multiply(settings.getPerKmRate()))
+//                        .add(request.getParcelWeightKg().multiply(settings.getPerKgRate())));
+
+
         BigDecimal advanceAmount = moneyScale(
                 totalAmount.multiply(settings.getAdvancePercentage()).divide(ONE_HUNDRED, 2, RoundingMode.HALF_UP));
         BigDecimal balanceAmount = moneyScale(totalAmount.subtract(advanceAmount));
@@ -44,6 +52,7 @@ public class PricingService {
                 routeDistanceKm,
                 moneyScale(settings.getBaseRate()),
                 moneyScale(settings.getPerKmRate()),
+//                moneyScale(settings.getPerKgRate())
                 moneyScale(settings.getAdvancePercentage()),
                 totalAmount,
                 advanceAmount,

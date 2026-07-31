@@ -49,9 +49,15 @@ public class ServiceSettingsService {
         recordChangeIfNeeded("base_rate", settings.getBaseRate(), request.getBaseRate(), currentUser);
         recordChangeIfNeeded("per_km_rate", settings.getPerKmRate(), request.getPerKmRate(), currentUser);
         recordChangeIfNeeded("advance_percentage", settings.getAdvancePercentage(), request.getAdvancePercentage(), currentUser);
+//        recordChangeIfNeeded(
+//                "per_kg_rate",
+//                settings.getPerKgRate(),
+//                request.getPerKgRate(),
+//                currentUser);
 
         settings.setBaseRate(request.getBaseRate());
         settings.setPerKmRate(request.getPerKmRate());
+//        settings.setPerKgRate(request.getPerKgRate());
         settings.setAdvancePercentage(request.getAdvancePercentage());
 
         ServiceSetting saved = serviceSettingRepository.save(settings);
@@ -79,6 +85,12 @@ public class ServiceSettingsService {
                 || request.getAdvancePercentage().compareTo(new BigDecimal("100")) > 0) {
             throw new AppException("Advance percentage must be greater than 0 and less than or equal to 100.", HttpStatus.BAD_REQUEST);
         }
+//        if (request.getPerKgRate() == null
+//                || request.getPerKgRate().compareTo(BigDecimal.ZERO) < 0) {
+//            throw new AppException(
+//                    "Per KG rate must be greater than or equal to 0.",
+//                    HttpStatus.BAD_REQUEST);
+//        }
     }
 
     private void recordChangeIfNeeded(String settingName, BigDecimal oldValue, BigDecimal newValue, User changedByUser) {

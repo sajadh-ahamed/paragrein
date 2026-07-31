@@ -13,6 +13,7 @@ public class ServiceSettingsResponse {
     private Boolean active;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+//    private BigDecimal perKgRate;
 
     public ServiceSettingsResponse(ServiceSetting serviceSetting) {
         this.id = serviceSetting.getId();
@@ -22,6 +23,7 @@ public class ServiceSettingsResponse {
         this.active = serviceSetting.getActive();
         this.createdAt = serviceSetting.getCreatedAt();
         this.updatedAt = serviceSetting.getUpdatedAt();
+//        this.perKgRate = serviceSetting.getPerKgRate();
     }
 
     public Long getId() {
@@ -51,4 +53,8 @@ public class ServiceSettingsResponse {
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
+
+//    public BigDecimal getPerKgRate() {
+//        return perKgRate;
+//    }
 }

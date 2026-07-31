@@ -110,6 +110,7 @@ public class CustomerOrderService {
         order.setRouteDistanceKm(cost.getRouteDistanceKm());
         order.setBaseRate(cost.getBaseRate());
         order.setPerKmRate(cost.getPerKmRate());
+//        order.setPerKgRate(cost.getPerKgRate());
         order.setTotalAmount(cost.getTotalAmount());
         order.setAdvanceAmount(cost.getAdvanceAmount());
         order.setBalanceAmount(cost.getBalanceAmount());

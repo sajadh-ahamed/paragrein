@@ -18,4 +18,5 @@ public class CostPreviewResponse {
     private BigDecimal totalAmount;
     private BigDecimal advanceAmount;
     private BigDecimal balanceAmount;
+//    private BigDecimal perKgRate;
 }

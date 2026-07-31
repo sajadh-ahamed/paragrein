@@ -14,6 +14,7 @@ function PricingSettingsPage() {
   const [settingsForm, setSettingsForm] = useState({
     baseRate: "",
     perKmRate: "",
+    // perKgRate: "",
     advancePercentage: "",
   });
   const [message, setMessage] = useState("");
@@ -32,6 +33,7 @@ function PricingSettingsPage() {
       setSettingsForm({
         baseRate: settingsData.baseRate,
         perKmRate: settingsData.perKmRate,
+        //  perKgRate: settingsData.perKgRate,
         advancePercentage: settingsData.advancePercentage,
       });
     } catch (apiError) {
@@ -56,6 +58,7 @@ function PricingSettingsPage() {
     const payload = {
       baseRate: Number(settingsForm.baseRate),
       perKmRate: Number(settingsForm.perKmRate),
+      // perKgRate: Number(settingsForm.perKgRate),
       advancePercentage: Number(settingsForm.advancePercentage),
     };
 
@@ -63,10 +66,11 @@ function PricingSettingsPage() {
       payload.baseRate < 0 ||
       payload.perKmRate < 0 ||
       payload.advancePercentage <= 0 ||
+      // payload.perKgRate < 0
       payload.advancePercentage > 100
     ) {
       setError(
-        "Base/per-km rates must be at least 0, and advance percentage must be 1 to 100.",
+        "Base/per-km rates must be at least 0, and advance percentage must be 1 to 100.", //add per-kg rates
       );
       return;
     }
@@ -105,7 +109,8 @@ function PricingSettingsPage() {
         </p>
       ) : (
         <>
-          <section className="mt-6 grid gap-4 sm:grid-cols-3">
+        {/*use sm:grid-cols-4 */}
+          <section className="mt-6 grid gap-4 sm:grid-cols-3"> 
             <StatCard
               label="Base Rate"
               value={`Rs. ${Number(settings?.baseRate || 0).toFixed(2)}`}
@@ -117,6 +122,12 @@ function PricingSettingsPage() {
               hint="Applied to route distance"
               tone="blue"
             />
+            {/* <StatCard
+    label="Per KG Rate"
+    value={`Rs. ${Number(settings?.perKgRate || 0).toFixed(2)}`}
+    hint="Applied to parcel weight"
+    tone="purple"
+/> */}
             <StatCard
               label="Advance"
               value={`${Number(settings?.advancePercentage || 0).toFixed(2)}%`}
@@ -154,6 +165,16 @@ function PricingSettingsPage() {
                   value={settingsForm.perKmRate}
                   onChange={updateSettingsField}
                 />
+                {/* <FormInput
+                    label="Per KG Rate"
+                    id="perKgRate"
+                    name="perKgRate"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={settingsForm.perKgRate}
+                    onChange={updateSettingsField}
+/> */}
                 <FormInput
                   label="Advance Percentage"
                   id="advancePercentage"
@@ -171,8 +192,6 @@ function PricingSettingsPage() {
                 Save Settings
               </PrimaryButton>
             </form>
-
-        
           </section>
         </>
       )}
