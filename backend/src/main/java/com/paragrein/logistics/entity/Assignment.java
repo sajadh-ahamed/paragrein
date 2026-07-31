@@ -48,4 +48,11 @@ public class Assignment extends BaseEntity {
 
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
+
+    //add the reject for pick up agent
+//    @Column(name = "rejected_at")
+//    private LocalDateTime rejectedAt;
+//
+//    @Column(name = "rejection_reason", length = 500)
+//    private String rejectionReason;
 }

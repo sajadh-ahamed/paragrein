@@ -23,6 +23,14 @@ export function acceptPickupTask(assignmentId, note = '') {
   });
 }
 
+//reject
+// export async function rejectPickupTask(assignmentId, note) {
+//   return apiRequest(`/pickup/tasks/${assignmentId}/reject`, {
+//     method: 'POST',
+//     body: JSON.stringify({ note }),
+//   });
+// }
+
 export function markParcelPickedUp(assignmentId, note = '') {
   return apiRequest(`/pickup/tasks/${assignmentId}/mark-picked-up`, {
     method: 'PATCH',

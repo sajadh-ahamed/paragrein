@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+//,rejectPickupTask  add this below
 import { acceptPickupTask, getAssignedPickupTasks, markParcelPickedUp, markReachedWarehouse } from '../../api/pickupApi.js';
 import DataTable from '../../components/DataTable.jsx';
 import Modal from '../../components/Modal.jsx';
@@ -31,6 +32,8 @@ function AssignedPickupsPage() {
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+//   const [rejectModalOpen, setRejectModalOpen] = useState(false);
+// const [rejectReason, setRejectReason] = useState('');
 
   useEffect(() => {
     loadTasks();
@@ -48,6 +51,47 @@ function AssignedPickupsPage() {
       setLoading(false);
     }
   }
+
+//   function openRejectModal(task) {
+//     setSelectedTask(task);
+//     setRejectReason('');
+//     setRejectModalOpen(true);
+// }
+
+// async function submitReject() {
+
+//     if (!rejectReason.trim()) {
+//         setError("Rejection reason is required.");
+//         return;
+//     }
+
+//     try {
+
+//         setProcessing(true);
+
+//         await rejectPickupTask(
+//                 selectedTask.assignmentId,
+//                 rejectReason);
+
+//         setRejectModalOpen(false);
+
+//         setSelectedTask(null);
+
+//         setSuccess("Pickup assignment rejected.");
+
+//         await loadTasks();
+
+//     } catch (apiError) {
+
+//         setError(apiError.message);
+
+//     } finally {
+
+//         setProcessing(false);
+
+//     }
+
+// }
 
   function openAction(task) {
     const action = nextAction(task);
@@ -110,6 +154,23 @@ function AssignedPickupsPage() {
     },
   ];
 
+  //above chnage this part only 
+//   {action && (
+// <>
+//     <PrimaryButton
+//         onClick={() => openAction(task)}>
+//         {action.label}
+//     </PrimaryButton>
+
+//     {task.assignmentStatus === 'ASSIGNED' && (
+//         <SecondaryButton
+//             onClick={() => openRejectModal(task)}>
+//             Reject
+//         </SecondaryButton>
+//     )}
+// </>
+// )}
+
   const action = selectedTask ? nextAction(selectedTask) : null;
 
   return (
@@ -142,6 +203,34 @@ function AssignedPickupsPage() {
           <PrimaryButton onClick={submitAction} disabled={processing}>{processing ? 'Processing...' : 'Confirm Action'}</PrimaryButton>
         </div>
       </Modal>
+      {/* <Modal
+    open={rejectModalOpen}
+    title="Reject Pickup Assignment"
+    description="Please enter the rejection reason."
+    onClose={() => setRejectModalOpen(false)}
+>
+
+<textarea
+    className="pg-field mt-2 min-h-24"
+    value={rejectReason}
+    onChange={(e)=>setRejectReason(e.target.value)}
+/>
+
+<div className="mt-5 flex justify-end gap-3">
+
+<SecondaryButton
+onClick={()=>setRejectModalOpen(false)}>
+Cancel
+</SecondaryButton>
+
+<PrimaryButton
+onClick={submitReject}>
+Reject Assignment
+</PrimaryButton>
+
+</div>
+
+</Modal> */}
     </DashboardLayout>
   );
 }

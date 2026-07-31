@@ -6,13 +6,10 @@ import com.paragrein.logistics.dto.PickupTaskDetailResponse;
 import com.paragrein.logistics.dto.PickupTaskSummaryResponse;
 import com.paragrein.logistics.service.PickupAgentService;
 import java.util.List;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/pickup")
@@ -52,6 +49,20 @@ public class PickupAgentController {
     ) {
         return pickupAgentService.acceptPickupTask(assignmentId, request, authentication);
     }
+
+    //reject pickup task
+//    @PostMapping("/{assignmentId}/reject")
+//    public ResponseEntity<PickupTaskDetailResponse> rejectPickupTask(
+//            @PathVariable Long assignmentId,
+//            @RequestBody PickupActionRequest request,
+//            Authentication authentication) {
+//
+//        return ResponseEntity.ok(
+//                pickupAgentService.rejectPickupTask(
+//                        assignmentId,
+//                        request,
+//                        authentication));
+//    }
 
     @PatchMapping("/tasks/{assignmentId}/mark-picked-up")
     public PickupTaskDetailResponse markParcelPickedUp(

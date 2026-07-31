@@ -149,6 +149,78 @@ public class PickupAgentService {
         return buildDetail(assignment);
     }
 
+    //reject pickup task
+//    @Transactional
+//    public PickupTaskDetailResponse rejectPickupTask(Long assignmentId,
+//                                                     PickupActionRequest request,
+//                                                     Authentication authentication) {
+//
+//        User pickupAgent = SecurityUserUtil.requireCurrentUser(authentication);
+//
+//        Assignment assignment = findOwnPickupAssignment(assignmentId, pickupAgent);
+//
+//        Order order = assignment.getOrder();
+//
+//        if (assignment.getAssignmentStatus() != AssignmentStatus.ASSIGNED
+//                || order.getOrderStatus() != OrderStatus.ASSIGNED_TO_PICKUP) {
+//            throw new AppException(
+//                    "Only newly assigned pickup tasks can be rejected.",
+//                    HttpStatus.BAD_REQUEST);
+//        }
+//
+//        OrderStatus previousStatus = order.getOrderStatus();
+//
+//        assignment.setAssignmentStatus(AssignmentStatus.REJECTED);
+//        assignment.setRejectedAt(LocalDateTime.now());
+//        assignment.setRejectionReason(actionNote(request,
+//                "Pickup assignment rejected."));
+//
+//        Assignment savedAssignment = assignmentRepository.save(assignment);
+//
+//        order.setOrderStatus(OrderStatus.PENDING_ADVANCE_VERIFICATION);
+//        Order savedOrder = orderRepository.save(order);
+//
+//        EmployeeProfile profile = employeeProfileRepository
+//                .findByUserId(pickupAgent.getId())
+//                .orElseThrow(() -> new AppException(
+//                        "Pickup agent employee profile not found.",
+//                        HttpStatus.NOT_FOUND));
+//
+//        profile.setAvailabilityStatus(AvailabilityStatus.AVAILABLE);
+//        employeeProfileRepository.save(profile);
+//
+//        saveStatusHistory(
+//                savedOrder,
+//                previousStatus,
+//                OrderStatus.PENDING_ADVANCE_VERIFICATION,
+//                pickupAgent,
+//                "Pickup rejected: " + assignment.getRejectionReason());
+//
+//        saveAudit(
+//                pickupAgent,
+//                "PICKUP_TASK_REJECTED",
+//                "Assignment",
+//                savedAssignment.getId(),
+//                "Rejected pickup for " + savedOrder.getTrackingNumber());
+//
+//        userRepository.findByRole_Code(RoleCode.ADMIN)
+//                .forEach(admin -> createNotification(
+//                        admin,
+//                        "Pickup Assignment Rejected",
+//                        "Pickup agent rejected order "
+//                                + savedOrder.getTrackingNumber()
+//                                + ". Please assign another pickup agent.",
+//                        NotificationType.ASSIGNMENT));
+//
+//        createNotification(
+//                savedOrder.getCustomer(),
+//                "Pickup Reassignment",
+//                "Your pickup is being reassigned to another pickup agent.",
+//                NotificationType.ORDER_STATUS);
+//
+//        return buildDetail(savedAssignment);
+//    }
+
     @Transactional
     public PickupTaskDetailResponse markReachedWarehouse(Long assignmentId, PickupActionRequest request, Authentication authentication) {
         User pickupAgent = SecurityUserUtil.requireCurrentUser(authentication);

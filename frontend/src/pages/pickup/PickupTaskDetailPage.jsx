@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+// add rejectPickupTask,
 import { acceptPickupTask, getPickupTaskDetail, markParcelPickedUp, markReachedWarehouse } from '../../api/pickupApi.js';
 import Modal from '../../components/Modal.jsx';
 import PageHeader from '../../components/PageHeader.jsx';
@@ -36,6 +37,9 @@ function PickupTaskDetailPage() {
   const [task, setTask] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [note, setNote] = useState('');
+// const [rejectModalOpen, setRejectModalOpen] = useState(false);
+// const [rejectReason, setRejectReason] = useState('');
+const [rejectReason, setRejectReason] = useState('');
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState('');
@@ -66,12 +70,43 @@ function PickupTaskDetailPage() {
     setSuccess('');
   }
 
+//   function openRejectModal() {
+//   setRejectReason('');
+//   setRejectModalOpen(true);
+// }
+
   async function submitAction() {
     const action = nextAction(task);
     if (!action) {
       setError('No valid next action is available for this pickup task.');
       return;
     }
+
+
+//     async function submitReject() {
+//   if (!rejectReason.trim()) {
+//     setError('Reject reason is required.');
+//     return;
+//   }
+
+//   try {
+//     setProcessing(true);
+
+//     const updated = await rejectPickupTask(task.assignmentId, {
+//       note: rejectReason,
+//     });
+
+//     setTask(updated);
+
+//     setSuccess(`Pickup rejected for ${task.trackingNumber}.`);
+
+//     setRejectModalOpen(false);
+//   } catch (apiError) {
+//     setError(apiError.message);
+//   } finally {
+//     setProcessing(false);
+//   }
+// }
 
     try {
       setProcessing(true);
@@ -143,6 +178,28 @@ function PickupTaskDetailPage() {
               </Link>
               {action && <PrimaryButton onClick={openActionModal}>{action.label}</PrimaryButton>}
             </div>
+
+{/*change above div tag completely
+ <div className="mt-6 flex flex-wrap gap-3">
+  <Link to="/pickup/tasks">
+    <SecondaryButton>
+      Back to Assigned Pickups
+    </SecondaryButton>
+  </Link>
+
+  {action && (
+    <PrimaryButton onClick={openActionModal}>
+      {action.label}
+    </PrimaryButton>
+  )}
+
+  {task?.assignmentStatus === 'ASSIGNED' && (
+    <SecondaryButton onClick={openRejectModal}>
+      Reject
+    </SecondaryButton>
+  )}
+</div> */}
+
           </section>
 
           <section className="pg-panel p-5">
@@ -174,6 +231,37 @@ function PickupTaskDetailPage() {
           <PrimaryButton onClick={submitAction} disabled={processing}>{processing ? 'Processing...' : 'Confirm Action'}</PrimaryButton>
         </div>
       </Modal>
+
+{/* <Modal
+  open={rejectModalOpen}
+  title="Reject Pickup Assignment"
+  description="Provide the reason for rejecting this assignment."
+  onClose={() => setRejectModalOpen(false)}
+>
+  <label className="block">
+    <span className="pg-label">Reject Reason</span>
+
+    <textarea
+      className="pg-field mt-2 min-h-24"
+      value={rejectReason}
+      onChange={(e) => setRejectReason(e.target.value)}
+    />
+  </label>
+
+  <div className="mt-5 flex justify-end gap-3">
+    <SecondaryButton onClick={() => setRejectModalOpen(false)}>
+      Cancel
+    </SecondaryButton>
+
+    <PrimaryButton
+      onClick={submitReject}
+      disabled={processing}
+    >
+      {processing ? 'Rejecting...' : 'Confirm Reject'}
+    </PrimaryButton>
+  </div>
+</Modal> */}
+
     </DashboardLayout>
   );
 }

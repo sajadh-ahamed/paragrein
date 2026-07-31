@@ -5,4 +5,5 @@ public enum AssignmentStatus {
     ACCEPTED,
     COMPLETED,
     CANCELLED
+//     REJECTED
 }
