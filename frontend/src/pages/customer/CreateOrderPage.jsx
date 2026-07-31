@@ -346,3 +346,232 @@ function CreateOrderPage() {
 }
 
 export default CreateOrderPage;
+
+/*1. CreateOrderPage.jsx ⭐ (highest priority)
+
+This page has the biggest changes.
+
+A. Update initialForm
+
+Current:
+
+senderAddress: '',
+pickupAddress: '',
+
+receiverAddress: '',
+dropoffAddress: '',
+
+Change to
+
+senderDistrict: '',
+senderTown: '',
+senderAddress: '',
+
+receiverDistrict: '',
+receiverTown: '',
+receiverAddress: '',
+
+pickupDistrict: '',
+pickupTown: '',
+pickupAddress: '',
+
+dropoffDistrict: '',
+dropoffTown: '',
+dropoffAddress: '',
+B. Update validateForm()
+
+Currently validates only
+
+senderAddress
+receiverAddress
+pickupAddress
+dropoffAddress
+
+Now validate
+
+senderDistrict
+senderTown
+senderAddress
+
+receiverDistrict
+receiverTown
+receiverAddress
+
+pickupDistrict
+pickupTown
+pickupAddress
+
+dropoffDistrict
+dropoffTown
+dropoffAddress
+C. Update buildPayload()
+
+Nothing special.
+
+Because it already sends
+
+...formData
+
+Once the new fields exist inside formData, they'll automatically be sent.
+
+D. Update Sender UI
+
+Instead of
+
+Sender Name
+Sender Phone
+Sender Address
+
+make it
+
+Sender Name
+Sender Phone
+
+Sender District (Dropdown)
+Sender Town (Textbox)
+
+Sender Address (Textbox)
+E. Update Receiver UI
+
+Change
+
+Receiver Name
+Receiver Phone
+Receiver Address
+
+to
+
+Receiver Name
+Receiver Phone
+
+Receiver District
+Receiver Town
+
+Receiver Address
+F. Update Pickup UI
+
+Current
+
+Pickup Address
+
+New
+
+Pickup District
+Pickup Town
+Pickup Address
+G. Update Drop-off UI
+
+Current
+
+Drop-off Address
+
+New
+
+Drop-off District
+Drop-off Town
+Drop-off Address
+2. CustomerOrderDetailsPage.jsx
+
+Currently shows
+
+Sender Address
+Receiver Address
+Pickup Address
+Drop-off Address
+
+Replace with
+
+Sender District
+Sender Town
+Sender Address
+
+Receiver District
+Receiver Town
+Receiver Address
+
+Pickup District
+Pickup Town
+Pickup Address
+
+Drop-off District
+Drop-off Town
+Drop-off Address
+3. My Orders page
+
+If it only displays
+
+Tracking
+Receiver
+Status
+Amount
+
+✅ No changes.
+
+If it displays pickup/drop-off addresses,
+
+update those fields.
+
+4. Admin Order Details
+
+Update exactly like Customer Order Details.
+
+5. Pickup Task page
+
+Show
+
+Pickup District
+Pickup Town
+Pickup Address
+
+instead of a single pickup address.
+
+6. Driver Task page
+
+Show
+
+Drop-off District
+Drop-off Town
+Drop-off Address
+7. Finance Order Details
+
+Same update.
+
+8. Reports
+
+If reports currently print
+
+Pickup Address
+Drop-off Address
+
+update them too.
+
+9. API layer
+
+Probably no changes if your API functions simply send the entire object:
+
+createCustomerOrder(formData)
+
+The new fields will automatically be included.
+
+I recommend one improvement
+
+Instead of using a text box for the district, use a dropdown.
+
+For example:
+
+<select
+    name="senderDistrict"
+    value={formData.senderDistrict}
+    onChange={updateField}
+    className="pg-field mt-2"
+>
+    <option value="">Select District</option>
+    <option value="Colombo">Colombo</option>
+    <option value="Gampaha">Gampaha</option>
+    <option value="Kandy">Kandy</option>
+    ...
+</select>
+
+Then use a normal text input for:
+
+Town */

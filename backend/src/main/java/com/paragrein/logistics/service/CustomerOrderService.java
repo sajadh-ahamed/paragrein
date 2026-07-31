@@ -97,6 +97,11 @@ public class CustomerOrderService {
         Order order = new Order();
         order.setTrackingNumber(generateTrackingNumber());
         order.setCustomer(customer);
+        //if our machchan said that true means here need to upadte like this
+//        this is for sender like this needed watch below full code sample
+        //order.setSenderDistrict(clean(request.getSenderDistrict()));
+        //order.setSenderTown(clean(request.getSenderTown()));
+        //order.setSenderAddress(clean(request.getSenderAddress()));
         order.setSenderName(clean(request.getSenderName()));
         order.setSenderPhone(clean(request.getSenderPhone()));
         order.setSenderAddress(clean(request.getSenderAddress()));
@@ -117,6 +122,8 @@ public class CustomerOrderService {
         order.setOrderStatus(OrderStatus.PENDING_ADVANCE_VERIFICATION);
         order.setFinancialStatus(FinancialStatus.ADVANCE_SUBMITTED);
         Order savedOrder = orderRepository.save(order);
+
+
 
         Payment payment = new Payment();
         payment.setOrder(savedOrder);
@@ -374,3 +381,60 @@ public class CustomerOrderService {
         return value.setScale(2, java.math.RoundingMode.HALF_UP);
     }
 }
+
+/*
+order.setSenderDistrict(clean(request.getSenderDistrict()));
+        order.setSenderTown(clean(request.getSenderTown()));
+        order.setSenderAddress(clean(request.getSenderAddress()));
+
+        order.setPickupDistrict(clean(request.getPickupDistrict()));
+        order.setPickupTown(clean(request.getPickupTown()));
+        order.setPickupAddress(clean(request.getPickupAddress()));
+
+        order.setReceiverDistrict(clean(request.getReceiverDistrict()));
+        order.setReceiverTown(clean(request.getReceiverTown()));
+        order.setReceiverAddress(clean(request.getReceiverAddress()));
+
+        order.setDropoffDistrict(clean(request.getDropoffDistrict()));
+        order.setDropoffTown(clean(request.getDropoffTown()));
+        order.setDropoffAddress(clean(request.getDropoffAddress()));
+
+        2. validateCreateRequest()
+
+Current
+
+requireText(request.getSenderAddress(), "Sender address is required.");
+
+requireText(request.getReceiverAddress(), "Receiver address is required.");
+
+requireText(request.getPickupAddress(), "Pickup address is required.");
+
+requireText(request.getDropoffAddress(), "Drop-off address is required.");
+
+Now validate every new field.
+
+Example
+
+requireText(request.getSenderDistrict(), "Sender district is required.");
+requireText(request.getSenderTown(), "Sender town is required.");
+requireText(request.getSenderAddress(), "Sender address is required.");
+
+requireText(request.getReceiverDistrict(), "Receiver district is required.");
+requireText(request.getReceiverTown(), "Receiver town is required.");
+requireText(request.getReceiverAddress(), "Receiver address is required.");
+
+requireText(request.getPickupDistrict(), "Pickup district is required.");
+requireText(request.getPickupTown(), "Pickup town is required.");
+requireText(request.getPickupAddress(), "Pickup address is required.");
+
+requireText(request.getDropoffDistrict(), "Drop-off district is required.");
+requireText(request.getDropoffTown(), "Drop-off town is required.");
+requireText(request.getDropoffAddress(), "Drop-off address is required.");
+3. buildOrderResponse()
+
+No changes.
+
+private OrderResponse buildOrderResponse(...)
+
+        */
+

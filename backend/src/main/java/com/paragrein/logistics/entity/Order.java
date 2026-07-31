@@ -83,3 +83,25 @@ public class Order extends AuditableEntity {
     @Column(name = "financial_status", nullable = false, length = 60)
     private FinancialStatus financialStatus;
 }
+
+//for seperate textfields for inputs
+
+// Sender
+/*private String senderDistrict;
+private String senderTown;
+private String senderAddress;
+
+// Receiver
+private String receiverDistrict;
+private String receiverTown;
+private String receiverAddress;
+
+// Pickup
+private String pickupDistrict;
+private String pickupTown;
+private String pickupAddress;
+
+// Drop-off
+private String dropoffDistrict;
+private String dropoffTown;
+private String dropoffAddress; */
