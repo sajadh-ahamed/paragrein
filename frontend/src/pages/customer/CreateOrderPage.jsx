@@ -314,6 +314,17 @@ function CreateOrderPage() {
           </div>
 
           <div className="pg-panel p-5">
+            <h2 className="text-xl font-bold">Bank Account Details</h2>
+            <p className="mt-2 text-sm text-[#94A3B8]">Use these details to make your advance payment.</p>
+            <div className="mt-4 grid gap-2 rounded-lg border border-[#263247] bg-[#111827] p-4 text-sm">
+              <div className="flex justify-between"><span className="text-[#94A3B8]">Bank Name:</span><strong>Bank of Ceylon (BOC)</strong></div>
+              <div className="flex justify-between"><span className="text-[#94A3B8]">Account Name:</span><strong>Paragrein Logistics (Pvt) Ltd</strong></div>
+              <div className="flex justify-between"><span className="text-[#94A3B8]">Account Number:</span><strong>1234567890</strong></div>
+              <div className="flex justify-between"><span className="text-[#94A3B8]">Branch:</span><strong>Kegalle Branch</strong></div>
+            </div>
+          </div>
+
+          <div className="pg-panel p-5">
             <h2 className="text-xl font-bold">Advance Payment</h2>
             <p className="mt-2 text-sm text-[#94A3B8]">Submit bank slip/reference details for finance verification.</p>
             <div className="mt-4 grid gap-4">

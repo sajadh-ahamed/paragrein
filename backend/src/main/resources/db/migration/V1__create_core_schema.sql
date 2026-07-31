@@ -71,9 +71,9 @@ CREATE TABLE IF NOT EXISTS orders (
     sender_address VARCHAR(500) NOT NULL,
     receiver_name VARCHAR(150) NOT NULL,
     receiver_phone VARCHAR(30) NOT NULL,
-    receiver_address VARCHAR(500) NOT NULL,
-    pickup_area_id BIGINT NOT NULL,
-    dropoff_area_id BIGINT NOT NULL,
+    receiver_address VARCHAR(500) NOT NULL,    
+    pickup_address VARCHAR(500) NOT NULL,
+    dropoff_address VARCHAR(500) NOT NULL,
     parcel_description VARCHAR(500) NOT NULL,
     parcel_weight_kg DECIMAL(10,2) NOT NULL,
     route_distance_km DECIMAL(10,2) NOT NULL,
@@ -86,9 +86,7 @@ CREATE TABLE IF NOT EXISTS orders (
     financial_status VARCHAR(60) NOT NULL,
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,
-    CONSTRAINT fk_orders_customer FOREIGN KEY (customer_id) REFERENCES users(id),
-    CONSTRAINT fk_orders_pickup_area FOREIGN KEY (pickup_area_id) REFERENCES service_areas(id),
-    CONSTRAINT fk_orders_dropoff_area FOREIGN KEY (dropoff_area_id) REFERENCES service_areas(id)
+    CONSTRAINT fk_orders_customer FOREIGN KEY (customer_id) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS order_status_history (

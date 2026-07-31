@@ -20,7 +20,7 @@ function DashboardLayout({ children }) {
   //MAIN LAYOUT WRAPPER
   return (
     <div className="min-h-screen bg-[#070B14] text-[#F8FAFC]"> {/* sets the background color and text color for the entire dashboard */}
-      <Sidebar role={user?.role} open={sidebarOpen} onClose={() => setSidebarOpen(false)} /> {/* user role (to show correct menu) */ }
+      <Sidebar role={user?.role} open={sidebarOpen} onClose={() => setSidebarOpen(false)} /> {/* user role (to show correct menu) */}
       <div className="lg:pl-72"> {/* this is the main content area, it has padding on the left for large screens to accommodate the sidebar */}
         <Topbar user={user} onMenuClick={() => setSidebarOpen(true)} /> {/* top navigation bar, it has a menu button to open the sidebar on mobile */}
         <main className="px-4 py-6 lg:px-8 lg:py-8">

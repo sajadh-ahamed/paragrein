@@ -175,14 +175,6 @@ function CustomerOrderDetailsPage() {
               <h2 className="text-xl font-bold">Payment and Cost</h2>
               <div className="mt-4 grid gap-3">
                 <InfoRow
-                  label="Base Rate"
-                  value={formatMoney(order.baseRate)}
-                />
-                <InfoRow
-                  label="Per KM Rate"
-                  value={formatMoney(order.perKmRate)}
-                />
-                <InfoRow
                   label="Total Amount"
                   value={formatMoney(order.totalAmount)}
                 />

@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import BrandLogo from "./BrandLogo.jsx";
 
 const menus = {
@@ -66,28 +66,7 @@ const menus = {
 };
 
 function Sidebar({ role, open, onClose }) {
-  const location = useLocation();
   const items = menus[role] || [];
-
-  function isActive(item) {
-    if (!item.to) {
-      return false;
-    }
-    if (
-      item.to === "/admin" ||
-      item.to === "/customer" ||
-      item.to === "/finance" ||
-      item.to === "/pickup" ||
-      item.to === "/warehouse" ||
-      item.to === "/driver"
-    ) {
-      return location.pathname === item.to;
-    }
-    return (
-      location.pathname === item.to ||
-      location.pathname.startsWith(`${item.to}/`)
-    );
-  }
 
   return (
     <>
@@ -107,22 +86,22 @@ function Sidebar({ role, open, onClose }) {
 
         <nav className="flex-1 space-y-1 overflow-y-auto px-4 py-5">
           {items.map((item) => {
-            const active = isActive(item);
-            const baseClass =
-              "group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition";
-            const activeClass = active
-              ? "bg-[#22C55E] text-[#07110B] shadow-lg shadow-[#22C55E]/15"
-              : "text-[#94A3B8] hover:bg-white/5 hover:text-[#F8FAFC]";
-
             return (
-              <Link
+              <NavLink
                 key={item.label}
                 to={item.to}
+                end
                 onClick={onClose}
-                className={`${baseClass} ${activeClass}`}
+                className={({ isActive }) =>
+                  `group flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition ${
+                    isActive
+                      ? "bg-[#22C55E] text-[#07110B] shadow-lg shadow-[#22C55E]/15"
+                      : "text-[#94A3B8] hover:bg-white/5 hover:text-[#F8FAFC]"
+                  }`
+                }
               >
                 <span>{item.label}</span>
-              </Link>
+              </NavLink>
             );
           })}
         </nav>
